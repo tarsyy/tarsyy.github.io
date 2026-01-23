@@ -1,4 +1,2 @@
 # tarsyy.github.io
-# ANDY'S DEBT PROGRESS WEB APP FOR MY iPHONE
-# 100% VIBE CODED. 
-# SORRY.
+andy's debt progress tracking web app for my iphone. 100% vibe code. sorry.
