@@ -299,6 +299,11 @@ button:disabled {
 
 
     <button id="resetBtn" style="background:#ff3b30;">Reset Tracker</button>
+	<div style="display:flex; gap:8px; margin-top:10px;">
+  <button id="importBtn" style="flex:1; background:#666666;">Import Data</button>
+  <button id="exportBtn" style="flex:1; background:#888888;">Export Data</button>
+  <input type="file" id="fileInput" style="display:none;" accept=".json">
+</div>
   </div>
   <div id="ftr">Test</div>
 </div>
@@ -516,6 +521,73 @@ cancelInterestBtn.onclick = () => {
   toggleInterestBtn.classList.remove('active');
   interestInput.value = '';
 };
+
+
+const exportBtn = document.getElementById('exportBtn');
+const importBtn = document.getElementById('importBtn');
+const fileInput = document.getElementById('fileInput');
+
+// Export localStorage
+exportBtn.onclick = () => {
+  const data = JSON.stringify(localStorage.getItem('debtTracker'));
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  // Generate date string like JAN21_2026
+  const now = new Date();
+  const monthNames = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  const month = monthNames[now.getMonth()];
+  const day = String(now.getDate()).padStart(2, '0');
+  const year = now.getFullYear();
+  const filename = `user-settings_${month}${day}_${year}.json`;
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+// Trigger file input for import
+importBtn.onclick = () => {
+  fileInput.click();
+};
+
+// Handle file import
+fileInput.onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    const importedData = JSON.parse(text);
+    
+    if (importedData) {
+      localStorage.setItem('debtTracker', JSON.stringify(importedData));
+      const { startingAmount, currentAmount, interestRate, monthlyPayment } = importedData;
+      
+      // Apply imported values
+      window.startingAmount = startingAmount;
+      window.currentAmount = currentAmount;
+      window.interestRate = interestRate;
+      window.monthlyPayment = monthlyPayment;
+      
+      setup.style.display = 'none';
+      tracker.style.display = 'block';
+      applyMonthlyLogic();
+      updateProgress();
+      alert("Data imported successfully!");
+    }
+  } catch (err) {
+    alert("Failed to import data. Please make sure it's a valid JSON file.");
+    console.error(err);
+  }
+
+  fileInput.value = ""; // reset input
+};
+
 
 const saved = JSON.parse(localStorage.getItem('debtTracker'));
 if(saved){
