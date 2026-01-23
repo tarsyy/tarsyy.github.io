@@ -48,8 +48,13 @@ button {
 input {
   background: #1e1e1e;
   color: #e0e0e0;
-}
 
+}
+input:focus {
+  outline: 2px solid #FFFFFF; 
+  outline-offset: 2px;       
+  background-color: #2a2a2a; 
+}
 /* Buttons – iOS touch optimized */
 button {
   background: #007aff;
@@ -64,6 +69,7 @@ button {
   min-height: 44px;
   transition: transform 0.08s ease, background-color 0.3s ease, opacity 0.15s ease;
   will-change: transform;
+  border-top:2px solid rgba(255,255,255,0.6);
 }
 
 button:active {
@@ -232,6 +238,21 @@ button:disabled {
   }
 }
 
+#interestWrapper {
+  display: none;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+#interestWrapper.show {
+  display: flex;
+}
+
+#interestWrapper input {
+  flex: 1;
+  margin-bottom: 0;
+}
 
 </style>
 </head>
@@ -260,14 +281,22 @@ button:disabled {
 
   
 
+    <div class="summary" id="summaryText"></div>
+    <div class="next-payment" id="nextPaymentText"></div>
+	
     <div class="add-payment-wrapper" id="addPaymentWrapper">
       <input id="extraPaymentInput" type="number" placeholder="Extra payment ($)">
       <button class="cancel-btn" id="cancelAddPayment">×</button>
     </div>
 	  <button id="toggleAddPayment">Add Payment</button>
 
-    <div class="summary" id="summaryText"></div>
-    <div class="next-payment" id="nextPaymentText"></div>
+	
+<div class="add-payment-wrapper" id="interestWrapper">
+<input id="interestInput" type="text" placeholder="Interest Rate (%)" step="0.01" min="0">
+  <button class="cancel-btn" id="cancelInterestBtn">×</button>
+</div>
+<button id="toggleInterestBtn" style="background:#2D3745; margin-top:8px; margin-bottom:18px;">Change Interest Rate</button>
+
 
     <button id="resetBtn" style="background:#ff3b30;">Reset Tracker</button>
   </div>
@@ -320,13 +349,15 @@ function updateProgress(){
   pb.style.width = pct + '%';
   document.getElementById('startLabel').textContent = `$${startingAmount.toFixed(2)}`;
 
-  if(currentAmount <= 0){
+if(currentAmount <= 0){
     pb.className = 'progress-bar finished';
     addBtn.style.display = 'none';
     wrapper.style.display = 'none';
+    toggleInterestBtn.style.display = 'none'; 
+    interestWrapper.style.display = 'none';   
     document.getElementById('summaryText').textContent = "Debt Paid Off!";
-	document.getElementById('nextPaymentText').textContent = '';
-	title.textContent = "DEBT PAID OFF! 🎉";
+    document.getElementById('nextPaymentText').textContent = '';
+    title.textContent = "DEBT PAID OFF! 🎉";
   } else {
     pb.className = 'progress-bar flowing';
 	updateNextPaymentText();
@@ -432,6 +463,60 @@ resetBtn.onclick=()=>{
   }
 };
 
+const interestWrapper = document.getElementById('interestWrapper');
+const interestInput = document.getElementById('interestInput');
+const toggleInterestBtn = document.getElementById('toggleInterestBtn');
+const cancelInterestBtn = document.getElementById('cancelInterestBtn');
+
+interestInput.addEventListener('input', (e) => {
+  let val = e.target.value;
+
+  // Remove any character that's not a digit or dot
+  val = val.replace(/[^\d.]/g, '');
+
+  // Only allow one dot
+  const firstDot = val.indexOf('.');
+  if (firstDot !== -1) {
+    // Keep first dot, remove the rest
+    val = val.slice(0, firstDot + 1) + val.slice(firstDot + 1).replace(/\./g, '');
+  }
+
+  e.target.value = val;
+});
+
+toggleInterestBtn.onclick = () => {
+  if (!interestWrapper.classList.contains('show')) {
+    interestWrapper.classList.add('show');
+    toggleInterestBtn.classList.add('active');
+    interestInput.value = interestRate; 
+    interestInput.focus();
+  } else {
+    const v = parseFloat(interestInput.value);
+    if (!isNaN(v) && v >= 0) {
+      interestRate = v;
+      localStorage.setItem('debtTracker', JSON.stringify({startingAmount,currentAmount,interestRate,monthlyPayment}));
+      updateProgress();
+      
+      // Show the updated interest rate in the floating text
+      const container = document.querySelector('.progress-container');
+      const el = document.createElement('div');
+      el.className = 'payment-float';
+      el.textContent = `Interest rate set to: ${interestRate.toFixed(2)}%`;
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 2500);
+    }
+    interestWrapper.classList.remove('show');
+    toggleInterestBtn.classList.remove('active');
+    interestInput.value = '';
+  }
+};
+
+cancelInterestBtn.onclick = () => {
+  interestWrapper.classList.remove('show');
+  toggleInterestBtn.classList.remove('active');
+  interestInput.value = '';
+};
+
 const saved = JSON.parse(localStorage.getItem('debtTracker'));
 if(saved){
   ({startingAmount,currentAmount,interestRate,monthlyPayment}=saved);
@@ -441,6 +526,8 @@ if(saved){
   updateProgress();
 }
 
+
+
 const ftr = document.getElementById('ftr');
 const currentYear = new Date().getFullYear();
 ftr.innerHTML = `AP &copy; ${currentYear} `;
@@ -448,6 +535,7 @@ ftr.innerHTML = `AP &copy; ${currentYear} `;
 </script>
 </body>
 </html>
+
 
 
 
