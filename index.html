@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Debt Free Tracker</title>
+
+<style>
+/* Base layout */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: #000;
+  color: #e0e0e0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  max-width: 430px;
+  width: 100%;
+  padding: 20px;
+  position: relative; 
+}
+
+/* Headings */
+h1 {
+  text-align: center;
+  color: #fff;
+  margin-bottom: 20px;
+}
+
+/* Shared form controls */
+input,
+button {
+  font-size: 18px;
+  padding: 14px;
+  width: 100%;
+  border-radius: 12px;
+  border: none;
+  box-sizing: border-box;
+}
+
+/* Inputs */
+input {
+  background: #1e1e1e;
+  color: #e0e0e0;
+}
+
+/* Buttons – iOS touch optimized */
+button {
+  background: #007aff;
+  color: #fff;
+  cursor: pointer;
+
+  /* iOS touch behavior */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+
+  min-height: 44px;
+  transition: transform 0.08s ease, background-color 0.3s ease, opacity 0.15s ease;
+  will-change: transform;
+}
+
+button:active {
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+button:disabled {
+  opacity: 0.5;
+}
+
+/* Setup spacing */
+#setup input {
+  margin-bottom: 16px;
+}
+
+#setup button {
+  margin-top: 10px;
+}
+
+/* Progress bar */
+.progress-container {
+  width: 100%;
+  height: 30px;
+  background: #2c2c2c;
+  border-radius: 20px;
+  margin: 20px 0;
+  position: relative;
+  overflow: visible;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  border-radius: 20px;
+  background-size: 300% 100%;
+  transition: width 0.4s ease;
+}
+
+/* Flowing idle animation */
+.progress-bar.flowing {
+  animation: flow 4s linear infinite;
+}
+
+@keyframes flow {
+  from { background-position: 0% 0; }
+  to   { background-position: 300% 0; }
+}
+
+/* RGB celebration */
+.progress-bar.finished {
+  animation: rgbPulse 2s linear infinite;
+}
+
+@keyframes rgbPulse {
+  0%   { background: red; }
+  16%  { background: orange; }
+  32%  { background: yellow; }
+  48%  { background: green; }
+  64%  { background: blue; }
+  80%  { background: violet; }
+  100% { background: red; }
+}
+
+/* Superscript labels */
+.superscript-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #aaa;
+}
+
+/* Add payment row */
+.add-payment-wrapper {
+  display: none;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.add-payment-wrapper.show {
+  display: flex;
+}
+
+.add-payment-wrapper input {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* Cancel (X) button */
+.cancel-btn {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  background: #ff3b30;
+  color: #fff;
+  border-radius: 12px;
+  font-size: 22px;
+}
+
+/* Summary text */
+.summary {
+  margin-top: 10px;
+}
+
+.next-payment {
+  font-size: 11px;
+  font-style: italic;
+  color: #fff;
+  margin: 8px 0;
+}
+
+/* Add Payment toggle */
+#toggleAddPayment {
+  margin-top: 12px;
+}
+
+#toggleAddPayment.active {
+  background-color: #2e6f40;
+}
+
+/* Floating payment text */
+.payment-float {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  animation: floatFade 1.6s ease-out forwards;
+}
+
+@keyframes floatFade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+}
+
+#ftr {
+  position: absolute;       
+  bottom: -5px;             
+  right: 30px;               
+  font-size: 12px;
+  color: #aaa;
+  user-select: none;
+  pointer-events: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+
+/* Hover effects only for real pointers */
+@media (hover: hover) {
+  button:hover {
+    filter: brightness(1.1);
+  }
+}
+
+
+</style>
+</head>
+
+<body>
+<div class="container">
+  <h1 id="titleText">Final Debt Progress</h1>
+
+  <div id="setup">
+    <input id="startingAmount" type="number" placeholder="Starting Amount ($)">
+    <input id="currentAmount" type="number" placeholder="Current Amount ($)">
+    <input id="interestRate" type="number" placeholder="Interest Rate (%)">
+    <input id="monthlyPayment" type="number" placeholder="Monthly Payment ($)">
+    <button id="startBtn">Start Tracker</button>
+  </div>
+
+  <div id="tracker" style="display:none;">
+    <div class="superscript-labels">
+      <div id="startLabel"></div>
+      <div>0</div>
+    </div>
+
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+  
+
+    <div class="add-payment-wrapper" id="addPaymentWrapper">
+      <input id="extraPaymentInput" type="number" placeholder="Extra payment ($)">
+      <button class="cancel-btn" id="cancelAddPayment">×</button>
+    </div>
+	  <button id="toggleAddPayment">Add Payment</button>
+
+    <div class="summary" id="summaryText"></div>
+    <div class="next-payment" id="nextPaymentText"></div>
+
+    <button id="resetBtn" style="background:#ff3b30;">Reset Tracker</button>
+  </div>
+  <div id="ftr">Test</div>
+</div>
+
+
+<script>
+const startingAmountInput = document.getElementById('startingAmount');
+const currentAmountInput  = document.getElementById('currentAmount');
+const interestRateInput   = document.getElementById('interestRate');
+const monthlyPaymentInput = document.getElementById('monthlyPayment');
+
+let startingAmount=0, currentAmount=0, interestRate=0, monthlyPayment=0;
+
+const pb = document.getElementById('progressBar');
+const tracker = document.getElementById('tracker');
+const setup = document.getElementById('setup');
+const wrapper = document.getElementById('addPaymentWrapper');
+const addBtn = document.getElementById('toggleAddPayment');
+
+function applyMonthlyLogic(){
+  const now = new Date();
+  let m = +localStorage.getItem('lastMonth');
+  let y = +localStorage.getItem('lastYear');
+
+  if(isNaN(m)){
+    localStorage.setItem('lastMonth', now.getMonth());
+    localStorage.setItem('lastYear', now.getFullYear());
+    return;
+  }
+
+  while(y < now.getFullYear() || (y === now.getFullYear() && m < now.getMonth())){
+    currentAmount += currentAmount * (interestRate/100);
+    currentAmount -= monthlyPayment;
+    if(currentAmount < 0) currentAmount = 0;
+    m++;
+    if(m > 11){ m = 0; y++; }
+  }
+
+  localStorage.setItem('lastMonth', m);
+  localStorage.setItem('lastYear', y);
+}
+
+function updateProgress(){
+  const paid = startingAmount - currentAmount;
+  const pct = Math.min((paid/startingAmount)*100,100);
+  const title = document.getElementById('titleText');
+
+  pb.style.width = pct + '%';
+  document.getElementById('startLabel').textContent = `$${startingAmount.toFixed(2)}`;
+
+  if(currentAmount <= 0){
+    pb.className = 'progress-bar finished';
+    addBtn.style.display = 'none';
+    wrapper.style.display = 'none';
+    document.getElementById('summaryText').textContent = "Debt Paid Off!";
+	document.getElementById('nextPaymentText').textContent = '';
+	title.textContent = "DEBT PAID OFF! 🎉";
+  } else {
+    pb.className = 'progress-bar flowing';
+	updateNextPaymentText();
+
+    const rem = currentAmount/startingAmount*100;
+    if(rem>85) pb.style.background='linear-gradient(90deg,#ff3b30,#ff7a7a,#ff3b30)';
+    else if(rem>60) pb.style.background='linear-gradient(90deg,#ff9500,#ffd180,#ff9500)';
+    else if(rem>50) pb.style.background='linear-gradient(90deg,#ffd60a,#fff3b0,#ffd60a)';
+    else if(rem>30) pb.style.background='linear-gradient(90deg,#0a84ff,#66b3ff,#0a84ff)';
+    else pb.style.background='linear-gradient(90deg,#34c759,#6be585,#34c759)';
+  }
+
+  document.getElementById('summaryText').textContent =
+    `Paid $${paid.toFixed(2)} of $${startingAmount.toFixed(2)} (${pct.toFixed(1)}%)`;
+
+  localStorage.setItem('debtTracker', JSON.stringify({startingAmount,currentAmount,interestRate,monthlyPayment}));
+}
+
+function showPaymentFloat(amount) {
+  const container = document.querySelector('.progress-container');
+
+  const el = document.createElement('div');
+  el.className = 'payment-float';
+  el.textContent = `–$${amount.toFixed(2)}`;
+
+  container.appendChild(el);
+
+
+  setTimeout(() => el.remove(), 1600);
+}
+
+function updateNextPaymentText() {
+  const now = new Date();
+
+
+  const nextPaymentDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  const diffMs = nextPaymentDate - now;
+  const daysAway = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  const formattedDate = nextPaymentDate.toLocaleDateString(undefined, options);
+
+  document.getElementById('nextPaymentText').textContent =
+    `Next monthly payment: ${formattedDate} (${daysAway} days away)`;
+}
+
+startBtn.onclick = () => {
+  startingAmount = parseFloat(startingAmountInput.value);
+  currentAmount  = parseFloat(currentAmountInput.value);
+  interestRate   = parseFloat(interestRateInput.value);
+  monthlyPayment = parseFloat(monthlyPaymentInput.value);
+
+  if (
+    isNaN(startingAmount) || startingAmount <= 0 ||
+    isNaN(currentAmount)  || currentAmount < 0 ||
+    isNaN(interestRate)   || interestRate < 0 ||
+    isNaN(monthlyPayment) || monthlyPayment <= 0
+  ) {
+    alert("Please enter valid numeric values.");
+    return;
+  }
+
+
+  const now = new Date();
+  localStorage.setItem('lastMonth', now.getMonth());
+  localStorage.setItem('lastYear', now.getFullYear());
+
+  setup.style.display = 'none';
+  tracker.style.display = 'block';
+  updateProgress();
+};
+
+toggleAddPayment.onclick = () => {
+  if (!wrapper.classList.contains('show')) {
+    wrapper.classList.add('show');
+    toggleAddPayment.classList.add('active'); 
+    extraPaymentInput.focus();
+  } else {
+    const v = +extraPaymentInput.value;
+    if (v > 0) {
+      currentAmount -= v;
+      if (currentAmount < 0) currentAmount = 0;
+      updateProgress();
+	  showPaymentFloat(v);
+    }
+    wrapper.classList.remove('show');
+    toggleAddPayment.classList.remove('active'); 
+    extraPaymentInput.value = '';
+  }
+};
+
+cancelAddPayment.onclick = () => {
+  wrapper.classList.remove('show');
+  toggleAddPayment.classList.remove('active'); 
+  extraPaymentInput.value = '';
+};
+
+resetBtn.onclick=()=>{
+  if(confirm("Reset tracker?")){
+    localStorage.clear();
+    location.reload();
+  }
+};
+
+const saved = JSON.parse(localStorage.getItem('debtTracker'));
+if(saved){
+  ({startingAmount,currentAmount,interestRate,monthlyPayment}=saved);
+  setup.style.display='none';
+  tracker.style.display='block';
+  applyMonthlyLogic(); 
+  updateProgress();
+}
+
+const ftr = document.getElementById('ftr');
+const currentYear = new Date().getFullYear();
+ftr.innerHTML = `AP &copy; ${currentYear} `;
+
+</script>
+</body>
+</html>
