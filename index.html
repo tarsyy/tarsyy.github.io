@@ -99,7 +99,7 @@ button:disabled {
   border-radius: 20px;
   margin: 20px 0;
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   border-top: 2px solid rgba(255,255,255,0.5);
 }
 
@@ -223,15 +223,14 @@ button:disabled {
   background-color: #2e6f40;
 }
 
-/* Floating payment text */
 .payment-float {
   position: absolute;
-  top: -28px;
+  top: -20px; /* start higher above the bar */
   left: 50%;
   transform: translateX(-50%);
   font-size: 16px;
   font-weight: 600;
-  color: #0FDE00;
+  color: #03CF00;
   opacity: 0;
   pointer-events: none;
   white-space: nowrap;        
@@ -240,19 +239,20 @@ button:disabled {
   text-align: center; 
   animation: floatFade 1.6s ease-out forwards;
   user-select:none;
+  z-index: 999;
 }
 
 @keyframes floatFade {
   0% {
     opacity: 0;
-    transform: translateX(-50%) translateY(10px);
+    transform: translateX(-50%) translateY(10px); /* start slightly below top */
   }
   20% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translateX(-50%) translateY(-30px);
+    transform: translateX(-50%) translateY(-40px); /* float higher */
   }
 }
 
@@ -611,6 +611,7 @@ saveSettingsBtn.onclick = () => {
   // Apply monthly logic and update progress
   applyMonthlyLogic();
   updateProgress();
+    settingsOverlay.classList.remove('show');
 };
 const startingAmountInput = document.getElementById('startingAmount');
 const currentAmountInput  = document.getElementById('currentAmount');
@@ -694,32 +695,33 @@ function updateProgress() {
   }));
 }
 
-
 function showPaymentFloat(amount) {
-
-
-  const container = document.querySelector('.progress-container');
-  if (!container) {
-    console.warn("Progress container not found!");
-    return;
-  }
+  const container = document.querySelector('.container'); 
+  const progressContainer = document.querySelector('.progress-container'); 
 
   const el = document.createElement('div');
   el.className = 'payment-float';
   el.textContent = `–$${amount.toFixed(2)}`;
-  
   container.appendChild(el);
 
-  // Force animation restart
+ 
+  const containerRect = container.getBoundingClientRect();
+  const progressRect = progressContainer.getBoundingClientRect();
+
+
+  const centerX = progressRect.left - containerRect.left + progressRect.width / 2;
+  const topY = progressRect.top - containerRect.top - 20; 
+
+  el.style.left = centerX + 'px';
+  el.style.top = topY + 'px';
+
+
   el.style.animation = 'none';
-  el.offsetHeight; // trigger reflow
+  el.offsetHeight; 
   el.style.animation = 'floatFade 1.6s ease-out forwards';
 
-  // Debug: log when element is removed
-  setTimeout(() => {
-  
-    el.remove();
-  }, 1600);
+ 
+  setTimeout(() => el.remove(), 1600);
 }
 
 
