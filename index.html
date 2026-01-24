@@ -358,26 +358,24 @@ font-size:0.9rem;
   position: relative;
   z-index: 1;
   width: 100%;
-  padding: 10px;
-  height: 50px;
+  height: 44px; 
+  padding: 0 14px; 
   font-size: 16px;
   border: none;
   border-radius: 12px;
   color: #e0e0e0;
   box-sizing: border-box;
+  background-color: transparent; 
+  -webkit-appearance: none; 
 }
 
 
 .date-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
-  position: absolute;
   right: 14px;
-  opacity: 1;
-  cursor: pointer;
+  height: 24px;
+  width: 24px;
   filter: invert(1);
-  height: 100%;
-  width: auto;
 }
-
 </style>
 </head>
 
@@ -516,6 +514,7 @@ editSettingsBtn.onclick = () => {
     overlayInterestRate.value = saved.interestRate || 0;
     overlayMonthlyPayment.value = saved.monthlyPayment || 0;
     overlayTargetPayoffDate.value = saved.targetPayoffDate || '';
+	updateAdditionalPaymentText(); 
   }
   settingsOverlay.style.display = 'flex';
 };
@@ -549,6 +548,10 @@ saveSettingsBtn.onclick = () => {
   interestRate = ir;
   monthlyPayment = mp;
   targetPayoffDate = tpd;
+  
+  targetDateInput.value = tpd;
+  
+  updateAdditionalPaymentText();
 
   // Save to localStorage
   localStorage.setItem('debtTracker', JSON.stringify({startingAmount, currentAmount, interestRate, monthlyPayment, targetPayoffDate}));
@@ -886,7 +889,7 @@ function updateAdditionalPaymentText() {
     return;
   }
 
-  const dateValue = targetDateInput.value;
+const dateValue = targetDateInput.value;
   if (!dateValue) {
     additionalText.textContent = '';
     return;
