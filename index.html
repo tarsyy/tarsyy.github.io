@@ -298,12 +298,22 @@ button:disabled {
   width: 100%;
   height: 100%;
   background: rgba(0,0,0,0.8);
-  backdrop-filter:blur(8px);
+  backdrop-filter: blur(0px); 
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 999;
+  opacity: 0; 
+  pointer-events: none; 
+  transition: opacity 0.4s ease, backdrop-filter 0.4s ease;
 }
+
+.overlay.show {
+  opacity: 1;
+  backdrop-filter: blur(8px);
+  pointer-events: auto; 
+}
+
 
 .overlay-content {
   background: #1e1e1e;
@@ -316,8 +326,14 @@ button:disabled {
   border-top:1px solid rgba(255,255,255,0.6);
   gap: 12px;
   box-shadow: inset 0 -4px 4px rgba(0,0,0,0.8);
+  transform: translateY(20px) scale(0.95);
+  opacity: 0;
+  transition: transform 0.4s ease, opacity 0.4s ease;
 }
-
+.overlay.show .overlay-content {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
 .overlay-content h2 {
   margin: 0 0 12px 0;
   color: #fff;
@@ -408,7 +424,7 @@ text-align:center;
   
 
 <!-- Overlay -->
-<div id="settingsOverlay" class="overlay" style="display:none;">
+<div id="settingsOverlay" class="overlay">
   <div class="overlay-content">
     <h2>User Settings</h2>
 
@@ -527,7 +543,7 @@ const overlayTargetPayoffDate = document.getElementById('overlayTargetPayoffDate
 const saveSettingsBtn = document.getElementById('saveSettingsBtn');
 const cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
 
-editSettingsBtn.style.display = 'none';
+
 // Open overlay
 editSettingsBtn.onclick = () => {
   const saved = JSON.parse(localStorage.getItem('debtTracker'));
@@ -537,16 +553,14 @@ editSettingsBtn.onclick = () => {
     overlayInterestRate.value = saved.interestRate || 0;
     overlayMonthlyPayment.value = saved.monthlyPayment || 0;
     overlayTargetPayoffDate.value = saved.targetPayoffDate || '';
-	updateAdditionalPaymentText(); 
   }
-  settingsOverlay.style.display = 'flex';
+  settingsOverlay.classList.add('show');
 };
 
-// Cancel overlay
+// Close overlay
 cancelSettingsBtn.onclick = () => {
-  settingsOverlay.style.display = 'none';
+  settingsOverlay.classList.remove('show');
 };
-
 // Save overlay
 saveSettingsBtn.onclick = () => {
   const sa = parseFloat(overlayStartingAmount.value);
@@ -579,7 +593,7 @@ saveSettingsBtn.onclick = () => {
   // Save to localStorage
   localStorage.setItem('debtTracker', JSON.stringify({startingAmount, currentAmount, interestRate, monthlyPayment, targetPayoffDate}));
 
-  settingsOverlay.style.display = 'none';
+
 
   // Reset monthly tracking
   const now = new Date();
@@ -969,11 +983,3 @@ ftr.innerHTML = `ver 0.2 AP &copy; ${currentYear}`;
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
