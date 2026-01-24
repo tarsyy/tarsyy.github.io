@@ -105,18 +105,31 @@ button:disabled {
   height: 100%;
   width: 0%;
   border-radius: 20px;
+  background: linear-gradient(
+    90deg,
+    #4ade80,
+    #22c55e,
+    #16a34a
+  );
   background-size: 300% 100%;
   transition: width 0.4s ease;
 }
 
-/* Flowing idle animation */
 .progress-bar.flowing {
-  animation: flow 4s linear infinite;
+  background: linear-gradient(90deg, #007aff, #34c759);
+  animation: pulseGlow 2.8s ease-in-out infinite;
 }
 
-@keyframes flow {
-  from { background-position: 0% 0; }
-  to   { background-position: 300% 0; }
+@keyframes pulseGlow {
+  0% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.85;
+  }
 }
 
 /* RGB celebration */
@@ -258,68 +271,272 @@ button:disabled {
   margin-bottom: 0;
 }
 
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.overlay-content {
+  background: #1e1e1e;
+  padding: 30px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.overlay-content h2 {
+  margin: 0 0 12px 0;
+  color: #fff;
+  text-align: center;
+}
+
+.overlay-content input {
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 12px;
+  border: none;
+  background: #2a2a2a;
+  color: #e0e0e0;
+}
+
+.overlay-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.overlay-buttons button {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 16px;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+.overlay-input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.overlay-input-group sup {
+  color: #aaa;
+  font-size: 12px;
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+#additionalPaymentText{
+margin-top:5px;
+font-size:0.9rem;
+}
 </style>
 </head>
 
 <body>
 <div class="container">
   <h1 id="titleText">Debt Paydown Tracker</h1>
-
-  <div id="setup">
-    <input id="startingAmount" type="number" placeholder="Starting Amount ($)">
-    <input id="currentAmount" type="number" placeholder="Current Amount ($)">
-    <input id="interestRate" type="number" placeholder="Interest Rate (%)">
-    <input id="monthlyPayment" type="number" placeholder="Monthly Payment ($)">
-    <button id="startBtn">Start Tracker</button>
-  </div>
-
-  <div id="tracker" style="display:none;">
-    <div class="superscript-labels">
-      <div id="startLabel"></div>
-      <div>0</div>
-    </div>
-
-    <div class="progress-container">
-      <div class="progress-bar" id="progressBar"></div>
-    </div>
-
   
 
-    <div class="summary" id="summaryText"></div>
-    <div class="next-payment" id="nextPaymentText"></div>
-	
-    <div class="add-payment-wrapper" id="addPaymentWrapper">
-      <input id="extraPaymentInput" type="number" placeholder="Extra payment ($)">
-      <button class="cancel-btn" id="cancelAddPayment">×</button>
+<!-- Overlay -->
+<div id="settingsOverlay" class="overlay" style="display:none;">
+  <div class="overlay-content">
+    <h2>User Settings</h2>
+
+    <div class="overlay-input-group">
+      <sup>Starting Amount ($)</sup>
+      <input id="overlayStartingAmount" type="number">
     </div>
-	  <button id="toggleAddPayment">Add Payment</button>
 
-	
-<div class="add-payment-wrapper" id="interestWrapper">
-<input id="interestInput" type="text" placeholder="Interest Rate (%)" step="0.01" min="0">
-  <button class="cancel-btn" id="cancelInterestBtn">×</button>
-</div>
-<button id="toggleInterestBtn" style="background:#2D3745; margin-top:8px; margin-bottom:18px;">Change Interest Rate</button>
+    <div class="overlay-input-group">
+      <sup>Current Amount ($)</sup>
+      <input id="overlayCurrentAmount" type="number" >
+    </div>
 
+    <div class="overlay-input-group">
+      <sup>Interest Rate (%)</sup>
+      <input id="overlayInterestRate" type="number" >
+    </div>
 
-    <button id="resetBtn" style="background:#ff3b30;">Reset Tracker</button>
-	<div style="display:flex; gap:8px; margin-top:10px;">
-  <button id="importBtn" style="flex:1; background:#666666;">Import Data</button>
-  <button id="exportBtn" style="flex:1; background:#888888;">Export Data</button>
-  <input type="file" id="fileInput" style="display:none;" accept=".json">
-</div>
+    <div class="overlay-input-group">
+      <sup>Monthly Payment ($)</sup>
+      <input id="overlayMonthlyPayment" type="number" >
+    </div>
+
+    <div class="overlay-input-group">
+      <sup>Target Payoff Date</sup>
+      <input id="overlayTargetPayoffDate" type="date">
+    </div>
+
+    <div class="overlay-buttons">
+      <button id="saveSettingsBtn" style="background:#007aff;">Save</button>
+      <button id="cancelSettingsBtn" style="background:#ff3b30;">Cancel</button>
+    </div>
   </div>
-  <div id="ftr">Test</div>
 </div>
+
+
+<div id="setup">
+  <input id="startingAmount" type="number" placeholder="Starting Amount ($)">
+  <input id="currentAmount" type="number" placeholder="Current Amount ($)">
+  <input id="interestRate" type="number" placeholder="Interest Rate (%)">
+  <input id="monthlyPayment" type="number" placeholder="Monthly Payment ($)">
+  <input id="targetPayoffDate" type="date" placeholder="Target Payoff Date">
+
+  <button id="startBtn">Start Tracker</button>
+</div>
+
+<div id="tracker" style="display:none;">
+  <div class="superscript-labels">
+    <div id="startLabel"></div>
+    <div>0</div>
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div class="summary" id="summaryText"></div>
+  <div class="additional-payment" id="additionalPaymentText"></div>
+    <div class="next-payment" id="nextPaymentText"></div>
+
+  <div class="add-payment-wrapper" id="addPaymentWrapper">
+    <input id="extraPaymentInput" type="number" placeholder="Extra payment ($)">
+    <button class="cancel-btn" id="cancelAddPayment">×</button>
+  </div>
+
+  <button id="toggleAddPayment">Add Payment</button>
+
+  <!-- Edit User Settings Button -->
+  <button
+    id="editSettingsBtn"
+    style="background:#2D3745; margin-top:10px; margin-bottom:10px;"
+  >
+    Edit User Settings
+  </button>
+
+  <!-- Reset -->
+  <button
+    id="resetBtn"
+    style="background:#ff3b30; margin-top:18px;"
+  >
+    Reset Tracker
+  </button>
+
+  <!-- Import / Export -->
+  <div style="display:flex; gap:8px; margin-top:10px;">
+    <button id="importBtn" style="flex:1; background:#666666;">
+      Import Data
+    </button>
+    <button id="exportBtn" style="flex:1; background:#888888;">
+      Export Data
+    </button>
+    <input
+      type="file"
+      id="fileInput"
+      style="display:none;"
+      accept=".json"
+    >
+  </div>
+</div>
+
+<div id="ftr">Test</div>
+
 
 
 <script>
+
+const editSettingsBtn = document.getElementById('editSettingsBtn');
+const settingsOverlay = document.getElementById('settingsOverlay');
+const overlayStartingAmount = document.getElementById('overlayStartingAmount');
+const overlayCurrentAmount = document.getElementById('overlayCurrentAmount');
+const overlayInterestRate = document.getElementById('overlayInterestRate');
+const overlayMonthlyPayment = document.getElementById('overlayMonthlyPayment');
+const overlayTargetPayoffDate = document.getElementById('overlayTargetPayoffDate');
+const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+const cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
+
+editSettingsBtn.style.display = 'none';
+// Open overlay
+editSettingsBtn.onclick = () => {
+  const saved = JSON.parse(localStorage.getItem('debtTracker'));
+  if (saved) {
+    overlayStartingAmount.value = saved.startingAmount || 0;
+    overlayCurrentAmount.value = saved.currentAmount || 0;
+    overlayInterestRate.value = saved.interestRate || 0;
+    overlayMonthlyPayment.value = saved.monthlyPayment || 0;
+    overlayTargetPayoffDate.value = saved.targetPayoffDate || '';
+  }
+  settingsOverlay.style.display = 'flex';
+};
+
+// Cancel overlay
+cancelSettingsBtn.onclick = () => {
+  settingsOverlay.style.display = 'none';
+};
+
+// Save overlay
+saveSettingsBtn.onclick = () => {
+  const sa = parseFloat(overlayStartingAmount.value);
+  const ca = parseFloat(overlayCurrentAmount.value);
+  const ir = parseFloat(overlayInterestRate.value);
+  const mp = parseFloat(overlayMonthlyPayment.value);
+  const tpd = overlayTargetPayoffDate.value;
+
+  if (
+    isNaN(sa) || sa <= 0 ||
+    isNaN(ca) || ca < 0 || ca > sa ||
+    isNaN(ir) || ir < 0 ||
+    isNaN(mp) || mp <= 0
+  ) {
+    alert("Please enter valid numeric values.");
+    return;
+  }
+
+  // Update variables
+  startingAmount = sa;
+  currentAmount = ca;
+  interestRate = ir;
+  monthlyPayment = mp;
+  targetPayoffDate = tpd;
+
+  // Save to localStorage
+  localStorage.setItem('debtTracker', JSON.stringify({startingAmount, currentAmount, interestRate, monthlyPayment, targetPayoffDate}));
+
+  settingsOverlay.style.display = 'none';
+
+  // Reset monthly tracking
+  const now = new Date();
+  localStorage.setItem('lastMonth', now.getMonth());
+  localStorage.setItem('lastYear', now.getFullYear());
+
+  // Show tracker if hidden
+  setup.style.display = 'none';
+  tracker.style.display = 'block';
+  editSettingsBtn.style.display = 'block';
+
+  // Apply monthly logic and update progress
+  applyMonthlyLogic();
+  updateProgress();
+};
 const startingAmountInput = document.getElementById('startingAmount');
 const currentAmountInput  = document.getElementById('currentAmount');
 const interestRateInput   = document.getElementById('interestRate');
 const monthlyPaymentInput = document.getElementById('monthlyPayment');
 
-let startingAmount=0, currentAmount=0, interestRate=0, monthlyPayment=0;
+
+let startingAmount=0, currentAmount=0, interestRate=0, monthlyPayment=0, targetPayoffDate='';
 
 const pb = document.getElementById('progressBar');
 const tracker = document.getElementById('tracker');
@@ -350,40 +567,51 @@ function applyMonthlyLogic(){
   localStorage.setItem('lastYear', y);
 }
 
-function updateProgress(){
+function updateProgress() {
+  if (startingAmount <= 0) return;
+
   const paid = startingAmount - currentAmount;
-  const pct = Math.min((paid/startingAmount)*100,100);
+  const pct = Math.min((paid / startingAmount) * 100, 100);
   const title = document.getElementById('titleText');
 
-  pb.style.width = pct + '%';
-  document.getElementById('startLabel').textContent = `$${startingAmount.toFixed(2)}`;
 
-if(currentAmount <= 0){
-    pb.className = 'progress-bar finished';
+  pb.className = 'progress-bar';
+
+  if (currentAmount <= 0) {
+    pb.classList.add('finished');
     addBtn.style.display = 'none';
     wrapper.style.display = 'none';
-    toggleInterestBtn.style.display = 'none'; 
-    interestWrapper.style.display = 'none';   
-    document.getElementById('summaryText').textContent = "Debt Paid Off!";
+       document.getElementById('summaryText').textContent = "Debt Paid Off!";
     document.getElementById('nextPaymentText').textContent = '';
+	document.getElementById('additionalPaymentText').textContent='';
+	document.getElementById('editSettingsBtn').style.display = "none";
     title.textContent = "DEBT PAID OFF! 🎉";
   } else {
-    pb.className = 'progress-bar flowing';
-	updateNextPaymentText();
-
-    const rem = currentAmount/startingAmount*100;
-    if(rem>85) pb.style.background='linear-gradient(90deg,#ff3b30,#ff7a7a,#ff3b30)';
-    else if(rem>60) pb.style.background='linear-gradient(90deg,#ff9500,#ffd180,#ff9500)';
-    else if(rem>50) pb.style.background='linear-gradient(90deg,#ffd60a,#fff3b0,#ffd60a)';
-    else if(rem>30) pb.style.background='linear-gradient(90deg,#0a84ff,#66b3ff,#0a84ff)';
-    else pb.style.background='linear-gradient(90deg,#34c759,#6be585,#34c759)';
+    pb.classList.add('flowing');
+    updateNextPaymentText();
+    updateAdditionalPaymentText();
   }
+
+  // Force redraw
+  requestAnimationFrame(() => {
+    pb.style.width = pct + '%';
+  });
+
+  document.getElementById('startLabel').textContent =
+    `$${startingAmount.toFixed(2)}`;
 
   document.getElementById('summaryText').textContent =
     `Paid $${paid.toFixed(2)} of $${startingAmount.toFixed(2)} (${pct.toFixed(1)}%)`;
 
-  localStorage.setItem('debtTracker', JSON.stringify({startingAmount,currentAmount,interestRate,monthlyPayment}));
+  localStorage.setItem('debtTracker', JSON.stringify({
+    startingAmount,
+    currentAmount,
+    interestRate,
+    monthlyPayment,
+    targetPayoffDate
+  }));
 }
+
 
 function showPaymentFloat(amount) {
   const container = document.querySelector('.progress-container');
@@ -397,6 +625,7 @@ function showPaymentFloat(amount) {
 
   setTimeout(() => el.remove(), 1600);
 }
+
 
 function updateNextPaymentText() {
   const now = new Date();
@@ -419,17 +648,18 @@ startBtn.onclick = () => {
   currentAmount  = parseFloat(currentAmountInput.value);
   interestRate   = parseFloat(interestRateInput.value);
   monthlyPayment = parseFloat(monthlyPaymentInput.value);
+  targetPayoffDate = targetDateInput.value; 
 
   if (
     isNaN(startingAmount) || startingAmount <= 0 ||
     isNaN(currentAmount)  || currentAmount < 0 ||
     isNaN(interestRate)   || interestRate < 0 ||
-    isNaN(monthlyPayment) || monthlyPayment <= 0
+    isNaN(monthlyPayment) || monthlyPayment <= 0 ||
+    !targetPayoffDate
   ) {
-    alert("Please enter valid numeric values.");
+    alert("Please enter valid numeric values and select a target date.");
     return;
   }
-
 
   const now = new Date();
   localStorage.setItem('lastMonth', now.getMonth());
@@ -437,8 +667,10 @@ startBtn.onclick = () => {
 
   setup.style.display = 'none';
   tracker.style.display = 'block';
+  editSettingsBtn.style.display = 'block';
   updateProgress();
 };
+
 
 toggleAddPayment.onclick = () => {
   if (!wrapper.classList.contains('show')) {
@@ -472,59 +704,8 @@ resetBtn.onclick=()=>{
   }
 };
 
-const interestWrapper = document.getElementById('interestWrapper');
-const interestInput = document.getElementById('interestInput');
-const toggleInterestBtn = document.getElementById('toggleInterestBtn');
-const cancelInterestBtn = document.getElementById('cancelInterestBtn');
 
-interestInput.addEventListener('input', (e) => {
-  let val = e.target.value;
 
-  // Remove any character that's not a digit or dot
-  val = val.replace(/[^\d.]/g, '');
-
-  // Only allow one dot
-  const firstDot = val.indexOf('.');
-  if (firstDot !== -1) {
-    // Keep first dot, remove the rest
-    val = val.slice(0, firstDot + 1) + val.slice(firstDot + 1).replace(/\./g, '');
-  }
-
-  e.target.value = val;
-});
-
-toggleInterestBtn.onclick = () => {
-  if (!interestWrapper.classList.contains('show')) {
-    interestWrapper.classList.add('show');
-    toggleInterestBtn.classList.add('active');
-    interestInput.value = interestRate; 
-    interestInput.focus();
-  } else {
-    const v = parseFloat(interestInput.value);
-    if (!isNaN(v) && v >= 0) {
-      interestRate = v;
-      localStorage.setItem('debtTracker', JSON.stringify({startingAmount,currentAmount,interestRate,monthlyPayment}));
-      updateProgress();
-      
-      // Show the updated interest rate in the floating text
-      const container = document.querySelector('.progress-container');
-      const el = document.createElement('div');
-      el.className = 'payment-float';
-      el.textContent = `Interest rate set to: ${interestRate.toFixed(2)}%`;
-      container.appendChild(el);
-      setTimeout(() => el.remove(), 2500);
-    }
-    interestWrapper.classList.remove('show');
-    toggleInterestBtn.classList.remove('active');
-    interestInput.value = '';
-  }
-};
-
-cancelInterestBtn.onclick = () => {
-  interestWrapper.classList.remove('show');
-  toggleInterestBtn.classList.remove('active');
-  interestInput.value = '';
-};
 
 
 const exportBtn = document.getElementById('exportBtn');
@@ -533,8 +714,17 @@ const fileInput = document.getElementById('fileInput');
 
 // EXPORT
 exportBtn.onclick = () => {
-  const data = localStorage.getItem('debtTracker'); // no extra JSON.stringify
-  const blob = new Blob([data], { type: "application/json" });
+  const targetPayoffDate = document.getElementById('targetPayoffDate').value;
+  
+  const data = {
+    startingAmount,
+    currentAmount,
+    interestRate,
+    monthlyPayment,
+    targetPayoffDate
+  };
+
+  const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
 
   const now = new Date();
@@ -542,7 +732,7 @@ exportBtn.onclick = () => {
   const month = monthNames[now.getMonth()];
   const day = String(now.getDate()).padStart(2, '0');
   const year = now.getFullYear();
-  const filename = `user-debt-settings_${month}${day}_${year}.json`;
+  const filename = `debt-data_${month}${day}_${year}.json`;
 
   const a = document.createElement('a');
   a.href = url;
@@ -552,7 +742,6 @@ exportBtn.onclick = () => {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 };
-
 // IMPORT
 fileInput.onchange = async (e) => {
   const file = e.target.files[0];
@@ -562,7 +751,7 @@ fileInput.onchange = async (e) => {
     const text = await file.text();
     const importedData = JSON.parse(text);
 
-    const { startingAmount: sa, currentAmount: ca, interestRate: ir, monthlyPayment: mp } = importedData;
+    const { startingAmount: sa, currentAmount: ca, interestRate: ir, monthlyPayment: mp, targetPayoffDate: tpd } = importedData;
 
     // Validation
     if (
@@ -575,14 +764,20 @@ fileInput.onchange = async (e) => {
       return;
     }
 
-    // Save and apply to local variables (NOT window)
+    // Apply to variables
     startingAmount = sa;
     currentAmount = ca;
     interestRate = ir;
     monthlyPayment = mp;
 
-    // Save to localStorage
-    localStorage.setItem('debtTracker', JSON.stringify({startingAmount, currentAmount, interestRate, monthlyPayment}));
+    // Restore target date if present
+    if (tpd) {
+      targetDateInput.value = tpd;
+      localStorage.setItem('targetPayoffDate', tpd);
+    }
+
+    // Save everything to localStorage
+    localStorage.setItem('debtTracker', JSON.stringify({startingAmount,currentAmount,interestRate,monthlyPayment}));
 
     setup.style.display = 'none';
     tracker.style.display = 'block';
@@ -612,20 +807,99 @@ importBtn.onclick = () => {
   fileInput.click();
 };
 
-const saved = JSON.parse(localStorage.getItem('debtTracker'));
-if(saved){
-  ({startingAmount,currentAmount,interestRate,monthlyPayment}=saved);
-  setup.style.display='none';
-  tracker.style.display='block';
-  applyMonthlyLogic(); 
-  updateProgress();
+const targetDateInput = document.getElementById('targetPayoffDate');
+
+// Restore once on load
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = JSON.parse(localStorage.getItem('debtTracker'));
+  if (saved) {
+    ({ startingAmount, currentAmount, interestRate, monthlyPayment, targetPayoffDate } = saved);
+
+    setup.style.display = 'none';
+    tracker.style.display = 'block';
+
+  if (targetPayoffDate) {
+  targetDateInput.value = targetPayoffDate;
+    updateAdditionalPaymentText(targetPayoffDate); 
+
+  setTimeout(() => {
+    //console.log('Target date after setting value:', targetDateInput.value);
+    updateAdditionalPaymentText();
+  }, 0);
+}
+
+    applyMonthlyLogic(); 
+	tracker.style.display = 'block';
+	editSettingsBtn.style.display = 'block';
+    updateProgress(); 
+	 //console.log('Target date value before computing additional payment:', targetDateInput.value);
+	 updateAdditionalPaymentText();
+  }
+});
+
+
+
+function updateAdditionalPaymentText() {
+  const additionalText = document.getElementById('additionalPaymentText');
+
+  if (currentAmount <= 0) {
+    additionalText.textContent = '';
+    return;
+  }
+
+  const dateValue = targetDateInput.value;
+  if (!dateValue) {
+    additionalText.textContent = '';
+    return;
+  }
+
+
+  const [year, month, day] = dateValue.split('-').map(Number);
+  const targetDate = new Date(year, month - 1, day);
+
+  if (isNaN(targetDate.getTime())) {
+    additionalText.textContent = '';
+    return;
+  }
+
+  const now = new Date();
+  let months =
+    (targetDate.getFullYear() - now.getFullYear()) * 12 +
+    (targetDate.getMonth() - now.getMonth());
+
+  if (months <= 0) {
+    additionalText.textContent = 'Target date must be in the future';
+    return;
+  }
+
+  const monthlyInterestRate = interestRate / 100;
+  const balance = currentAmount;
+
+
+  const totalInterest = (balance * monthlyInterestRate * months) / 12;
+  const remainingPayment = balance + totalInterest;
+  const additionalPerMonth = remainingPayment / months - monthlyPayment;
+
+  const formattedDate = targetDate.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  if (additionalPerMonth <= 0) {
+    additionalText.textContent =
+      `Current monthly payment is enough to meet target date (${formattedDate}).`;
+  } else {
+    additionalText.textContent =
+      `You will need to pay an additional $${additionalPerMonth.toFixed(2)} per month to finish by ${formattedDate}.`;
+  }
 }
 
 
 
 const ftr = document.getElementById('ftr');
 const currentYear = new Date().getFullYear();
-ftr.innerHTML = `AP &copy; ${currentYear} `;
+ftr.innerHTML = `ver 0.2 AP &copy; ${currentYear}`;
 
 </script>
 </body>
