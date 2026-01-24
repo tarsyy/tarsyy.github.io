@@ -60,9 +60,12 @@ button {
   background: #007aff;
   color: #fff;
   cursor: pointer;
+
+  /* iOS touch behavior */
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   user-select: none;
+
   min-height: 44px;
   transition: transform 0.08s ease, background-color 0.3s ease, opacity 0.15s ease;
   will-change: transform;
@@ -190,6 +193,7 @@ button:disabled {
   font-style: italic;
   color: #fff;
   margin: 8px 0;
+  text-align:center;
 }
 
 /* Add Payment toggle */
@@ -245,7 +249,7 @@ button:disabled {
 }
 
 
-
+/* Hover effects only for real pointers */
 @media (hover: hover) {
   button:hover {
     filter: brightness(1.1);
@@ -334,55 +338,43 @@ button:disabled {
   text-align: left;
 }
 
-
 #additionalPaymentText{
 margin-top:5px;
 font-size:0.9rem;
 }
 
-input[type="date"] {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-
-  display: block;
-  width: 100%;
-  font-size: 18px;
-  line-height: normal;
-  padding: 14px;
-
-  background-color: #1e1e1e !important; 
-  color: #e0e0e0;
-  border-radius: 12px;
-  border: none;
-  box-sizing: border-box;
-
-  text-align: left;
+.date-wrapper {
   position: relative;
+  border-radius: 12px;
+  background-color: #2a2a2a; /* matches the other inputs */
+  overflow: hidden;
 }
 
-/* Make the calendar icon visible but don't override the background */
-input[type="date"]::-webkit-calendar-picker-indicator {
+
+.date-wrapper input[type="date"] {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  border: none;
+  border-radius: 12px;
+  background: transparent; /* keep input transparent */
+  color: #e0e0e0;
+  box-sizing: border-box;
+}
+
+
+.date-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
   position: absolute;
   right: 14px;
   opacity: 1;
   cursor: pointer;
-  filter: invert(1); 
+  filter: invert(1);
   height: 100%;
   width: auto;
 }
 
-
-input[type="date"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-
-input[type="date"]::placeholder {
-  color: #aaa;
-  opacity: 1; 
-}
 </style>
 </head>
 
@@ -416,10 +408,12 @@ input[type="date"]::placeholder {
       <input id="overlayMonthlyPayment" type="number" >
     </div>
 
-    <div class="overlay-input-group">
-      <sup>Target Payoff Date</sup>
-      <input id="overlayTargetPayoffDate" type="date">
-    </div>
+ <div class="overlay-input-group">
+  <sup>Target Payoff Date</sup>
+  <div class="date-wrapper">
+    <input id="overlayTargetPayoffDate" type="date">
+  </div>
+</div>
 
     <div class="overlay-buttons">
       <button id="saveSettingsBtn" style="background:#007aff;">Save</button>
@@ -946,12 +940,6 @@ ftr.innerHTML = `ver 0.2 AP &copy; ${currentYear}`;
 </script>
 </body>
 </html>
-
-
-
-
-
-
 
 
 
