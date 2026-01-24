@@ -611,6 +611,7 @@ saveSettingsBtn.onclick = () => {
   // Apply monthly logic and update progress
   applyMonthlyLogic();
   updateProgress();
+  saveTracker();
     settingsOverlay.classList.remove('show');
 };
 const startingAmountInput = document.getElementById('startingAmount');
@@ -639,7 +640,7 @@ function applyMonthlyLogic(){
   }
 
   while(y < now.getFullYear() || (y === now.getFullYear() && m < now.getMonth())){
-    currentAmount += currentAmount * (interestRate/100);
+    currentAmount += currentAmount * (interestRate/100) / 12;
     currentAmount -= monthlyPayment;
     if(currentAmount < 0) currentAmount = 0;
     m++;
@@ -648,6 +649,16 @@ function applyMonthlyLogic(){
 
   localStorage.setItem('lastMonth', m);
   localStorage.setItem('lastYear', y);
+}
+
+function saveTracker() {
+  localStorage.setItem('debtTracker', JSON.stringify({
+    startingAmount,
+    currentAmount,
+    interestRate,
+    monthlyPayment,
+    targetPayoffDate
+  }));
 }
 
 function updateProgress() {
@@ -685,14 +696,6 @@ function updateProgress() {
 
   document.getElementById('summaryText').textContent =
     `Paid $${paid.toFixed(2)} of $${startingAmount.toFixed(2)} (${pct.toFixed(1)}%)`;
-
-  localStorage.setItem('debtTracker', JSON.stringify({
-    startingAmount,
-    currentAmount,
-    interestRate,
-    monthlyPayment,
-    targetPayoffDate
-  }));
 }
 
 function showPaymentFloat(amount) {
@@ -768,6 +771,7 @@ startBtn.onclick = () => {
   tracker.style.display = 'block';
   editSettingsBtn.style.display = 'block';
   updateProgress();
+saveTracker();
 };
 
 
@@ -785,6 +789,7 @@ toggleAddPayment.onclick = () => {
       if (currentAmount < 0) currentAmount = 0;
       updateProgress();
       showPaymentFloat(v); // This triggers the floating animation
+      saveTracker();
     }
     wrapper.classList.remove('show');
     toggleAddPayment.classList.remove('active'); 
@@ -837,7 +842,7 @@ exportBtn.onclick = () => {
   const month = monthNames[now.getMonth()];
   const day = String(now.getDate()).padStart(2, '0');
   const year = now.getFullYear();
-  const filename = `debt-data_${month}${day}_${year}.json`;
+  const filename = `user-settings_${month}${day}_${year}.json`;
 
   const a = document.createElement('a');
   a.href = url;
@@ -878,25 +883,26 @@ fileInput.onchange = async (e) => {
     // Restore target date if present
     if (tpd) {
       targetDateInput.value = tpd;
+      targetPayoffDate = tpd; 
       localStorage.setItem('targetPayoffDate', tpd);
     }
 
     // Save everything to localStorage
-    localStorage.setItem('debtTracker', JSON.stringify({startingAmount,currentAmount,interestRate,monthlyPayment}));
+    localStorage.setItem('debtTracker', JSON.stringify({
+      startingAmount,
+      currentAmount,
+      interestRate,
+      monthlyPayment,
+      targetPayoffDate: tpd
+    }));
 
+    // Show tracker
     setup.style.display = 'none';
     tracker.style.display = 'block';
 
     applyMonthlyLogic();
     updateProgress();
-
-    // Floating message
-    const container = document.querySelector('.progress-container');
-    const el = document.createElement('div');
-    el.className = 'payment-float';
-    el.textContent = `User data imported successfully!`;
-    container.appendChild(el);
-    setTimeout(() => el.remove(), 3000);
+    saveTracker();
 
   } catch (err) {
     alert("Failed to import data. Make sure it's a valid JSON file.");
@@ -939,6 +945,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateProgress(); 
 	 //console.log('Target date value before computing additional payment:', targetDateInput.value);
 	 updateAdditionalPaymentText();
+    
   }
 });
 
