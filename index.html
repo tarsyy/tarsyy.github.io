@@ -333,19 +333,7 @@ button:disabled {
   margin-bottom: 4px;
   text-align: left;
 }
-.overlay-content input[type="date"] {
 
-  -webkit-appearance: none;
-  appearance: none;
-  height: 52px;               
-  padding: 14px;              
-  font-size: 18px;
-  line-height: normal;
-  background-color: #1e1e1e;
-  color: #e0e0e0;
-  border-radius: 12px;
-  box-sizing: border-box;
-}
 
 #additionalPaymentText{
 margin-top:5px;
@@ -353,17 +341,38 @@ font-size:0.9rem;
 }
 input[type="date"] {
   -webkit-appearance: none;
+  -moz-appearance: none;
   appearance: none;
 
-  height: 52px;               
-  padding: 14px;              
+  display: block;
+  width: 100%;
+
   font-size: 18px;
   line-height: normal;
+  padding: 14px;
 
   background-color: #1e1e1e;
   color: #e0e0e0;
   border-radius: 12px;
+  border: none;
   box-sizing: border-box;
+
+  text-align: left; 
+}
+
+/* Remove the default inner shadow/arrow in Safari */
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-calendar-picker-indicator {
+  -webkit-appearance: none;
+  display: block; /* keeps the indicator clickable */
+  opacity: 1;
+  cursor: pointer;
+  margin-right: 0; /* prevent extra space */
+}
+
+/* Optional: make the calendar icon visible but styled */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1); /* makes icon white for dark background */
 }
 </style>
 </head>
@@ -928,6 +937,7 @@ ftr.innerHTML = `ver 0.2 AP &copy; ${currentYear}`;
 </script>
 </body>
 </html>
+
 
 
 
