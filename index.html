@@ -99,7 +99,7 @@ button:disabled {
   border-radius: 20px;
   margin: 20px 0;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   border-top: 2px solid rgba(255,255,255,0.5);
 }
 
@@ -231,7 +231,7 @@ button:disabled {
   transform: translateX(-50%);
   font-size: 16px;
   font-weight: 600;
-  color: #fff;
+  color: #0FDE00;
   opacity: 0;
   pointer-events: none;
   white-space: nowrap;        
@@ -245,14 +245,14 @@ button:disabled {
 @keyframes floatFade {
   0% {
     opacity: 0;
-    transform: translate(-50%, 10px);
+    transform: translateX(-50%) translateY(10px);
   }
   20% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -20px);
+    transform: translateX(-50%) translateY(-30px);
   }
 }
 
@@ -542,6 +542,9 @@ const overlayMonthlyPayment = document.getElementById('overlayMonthlyPayment');
 const overlayTargetPayoffDate = document.getElementById('overlayTargetPayoffDate');
 const saveSettingsBtn = document.getElementById('saveSettingsBtn');
 const cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
+const extraPaymentInput = document.getElementById('extraPaymentInput');
+const cancelAddPayment = document.getElementById('cancelAddPayment');
+const toggleAddPayment = document.getElementById('toggleAddPayment');
 
 
 // Open overlay
@@ -693,17 +696,32 @@ function updateProgress() {
 
 
 function showPaymentFloat(amount) {
+
+
   const container = document.querySelector('.progress-container');
+  if (!container) {
+    console.warn("Progress container not found!");
+    return;
+  }
 
   const el = document.createElement('div');
   el.className = 'payment-float';
   el.textContent = `–$${amount.toFixed(2)}`;
-
+  
   container.appendChild(el);
 
+  // Force animation restart
+  el.style.animation = 'none';
+  el.offsetHeight; // trigger reflow
+  el.style.animation = 'floatFade 1.6s ease-out forwards';
 
-  setTimeout(() => el.remove(), 1600);
+  // Debug: log when element is removed
+  setTimeout(() => {
+  
+    el.remove();
+  }, 1600);
 }
+
 
 
 function updateNextPaymentText() {
@@ -753,22 +771,28 @@ startBtn.onclick = () => {
 
 toggleAddPayment.onclick = () => {
   if (!wrapper.classList.contains('show')) {
+    // Open the add payment input
     wrapper.classList.add('show');
     toggleAddPayment.classList.add('active'); 
     extraPaymentInput.focus();
   } else {
-    const v = +extraPaymentInput.value;
-    if (v > 0) {
+    // Process the payment when clicking again
+    const v = parseFloat(extraPaymentInput.value);
+    if (!isNaN(v) && v > 0) {
       currentAmount -= v;
       if (currentAmount < 0) currentAmount = 0;
       updateProgress();
-	  showPaymentFloat(v);
+      showPaymentFloat(v); // This triggers the floating animation
     }
     wrapper.classList.remove('show');
     toggleAddPayment.classList.remove('active'); 
     extraPaymentInput.value = '';
   }
 };
+
+extraPaymentInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') toggleAddPayment.click();
+});
 
 cancelAddPayment.onclick = () => {
   wrapper.classList.remove('show');
