@@ -337,7 +337,19 @@ button:disabled {
   text-align: left;
 }
 .overlay-content input[type="date"] {
-  height: 48px;
+  {
+  -webkit-appearance: none;
+  appearance: none;
+
+  height: 52px;               
+  padding: 14px;              
+  font-size: 18px;
+  line-height: normal;
+
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border-radius: 12px;
+  box-sizing: border-box;
 }
 
 #additionalPaymentText{
@@ -921,6 +933,7 @@ ftr.innerHTML = `ver 0.2 AP &copy; ${currentYear}`;
 </script>
 </body>
 </html>
+
 
 
 
