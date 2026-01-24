@@ -31,6 +31,7 @@ h1 {
   text-align: center;
   color: #fff;
   margin-bottom: 20px;
+  user-select:none;
 }
 
 /* Shared form controls */
@@ -90,30 +91,43 @@ button:disabled {
   margin-top: 10px;
 }
 
-/* Progress bar */
+/*PROGRESS BAR*/
 .progress-container {
   width: 100%;
   height: 30px;
-  background: #2c2c2c;
+  background:  #2c2c2c;
   border-radius: 20px;
   margin: 20px 0;
   position: relative;
-  overflow: visible;
+  overflow: hidden;
+  border-top: 2px solid rgba(255,255,255,0.5);
+}
+
+
+.progress-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  pointer-events: none; 
+  box-shadow: inset 0 -4px 4px rgba(0,0,0,0.8);
+  z-index: 2; 
 }
 
 .progress-bar {
   height: 100%;
   width: 0%;
   border-radius: 20px;
-  background: linear-gradient(
-    90deg,
-    #4ade80,
-    #22c55e,
-    #16a34a
-  );
+  background: linear-gradient(90deg, #4ade80, #22c55e, #16a34a);
   background-size: 300% 100%;
   transition: width 0.4s ease;
+  position: relative;
+  z-index: 1; 
 }
+
 
 .progress-bar.flowing {
   background: linear-gradient(90deg, #007aff, #34c759);
@@ -153,6 +167,7 @@ button:disabled {
   justify-content: space-between;
   font-size: 14px;
   color: #aaa;
+  user-select:none;
 }
 
 /* Add payment row */
@@ -186,6 +201,8 @@ button:disabled {
 /* Summary text */
 .summary {
   margin-top: 10px;
+  user-select:none;
+  text-align:center;
 }
 
 .next-payment {
@@ -194,6 +211,7 @@ button:disabled {
   color: #fff;
   margin: 8px 0;
   text-align:center;
+  user-select:none;
 }
 
 /* Add Payment toggle */
@@ -221,6 +239,7 @@ button:disabled {
   overflow: hidden;           
   text-align: center; 
   animation: floatFade 1.6s ease-out forwards;
+  user-select:none;
 }
 
 @keyframes floatFade {
@@ -294,7 +313,9 @@ button:disabled {
   max-width: 350px;
   display: flex;
   flex-direction: column;
+  border-top:1px solid rgba(255,255,255,0.6);
   gap: 12px;
+  box-shadow: inset 0 -4px 4px rgba(0,0,0,0.8);
 }
 
 .overlay-content h2 {
@@ -344,6 +365,8 @@ button:disabled {
 #additionalPaymentText{
 margin-top:5px;
 font-size:0.9rem;
+user-select:none;
+text-align:center;
 }
 
 .date-wrapper {
