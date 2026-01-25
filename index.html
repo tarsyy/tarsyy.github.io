@@ -464,6 +464,52 @@ text-align:center;
   width: 24px;
   filter: invert(1);
 }
+
+/* Setup number & date inputs */
+#setup .setup-input-group input[type="number"],
+#setup .setup-input-group input[type="date"] {
+  height: 44px;
+  font-size: 16px;
+  padding: 0 14px;        /* horizontal padding */
+  border-radius: 12px;
+  border: none;
+  background: #2a2a2a;
+  color: #e0e0e0;
+  box-sizing: border-box;
+  line-height: normal;    /* reset so Safari doesn't stretch */
+}
+
+/* Date wrapper for setup */
+#setup .setup-input-group .date-wrapper {         
+  height: 44px;
+
+}
+
+/* Date input inside wrapper */
+#setup .setup-input-group .date-wrapper input[type="date"] {
+  -webkit-appearance: none;   
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: auto;               /* let flex + padding control height */
+  font-size: 16px;
+  padding: 10px 14px;         /* vertical padding to center text */
+  border: none;
+  border-radius: 12px;
+  background-color: transparent;
+  color: #e0e0e0;
+  box-sizing: border-box;
+  line-height: normal;         /* reset Safari stretching */
+  display: block;              /* ensure proper centering */
+}
+
+/* Date input focus outline */
+#setup .setup-input-group .date-wrapper input[type="date"]:focus {
+outline:none;
+}
+
+
+
 </style>
 </head>
 
@@ -513,14 +559,32 @@ text-align:center;
 
 
 <div id="setup">
-  <input id="startingAmount" type="number" placeholder="Starting Amount ($)">
-  <input id="currentAmount" type="number" placeholder="Current Amount ($)">
-  <input id="interestRate" type="number" placeholder="Interest Rate (%)">
-  <input id="monthlyPayment" type="number" placeholder="Monthly Payment ($)">
-  <input id="targetPayoffDate" type="date" placeholder="Target Payoff Date">
-
-  <button id="startBtn">Start Tracker</button>
+  <div class="setup-input-group">
+    <sup>Starting Amount ($)</sup>
+    <input id="startingAmount" type="number" placeholder="Starting Amount ($)">
+  </div>
+  <div class="setup-input-group">
+    <sup>Current Amount ($)</sup>
+    <input id="currentAmount" type="number" placeholder="Current Amount ($)">
+  </div>
+  <div class="setup-input-group">
+    <sup>Interest Rate (%)</sup>
+    <input id="interestRate" type="number" placeholder="Interest Rate (%)">
+  </div>
+  <div class="setup-input-group">
+    <sup>Monthly Payment ($)</sup>
+    <input id="monthlyPayment" type="number" placeholder="Monthly Payment ($)">
+  </div>
+  <div class="setup-input-group">
+    <sup>Target Payoff Date</sup>
+    <div class="date-wrapper">
+      <input id="targetPayoffDate" type="date" placeholder="Target Payoff Date">
+    </div>
+  </div>
+    <button id="startBtn" style="margin-top:10px;">Start Tracker</button>
 </div>
+
+
 
 <div id="tracker" style="display:none;">
   <div class="superscript-labels">
@@ -1059,7 +1123,7 @@ const dateValue = targetDateInput.value;
 
 const ftr = document.getElementById('ftr');
 const currentYear = new Date().getFullYear();
-ftr.innerHTML = `ver 0.2 AP &copy; ${currentYear}`;
+ftr.innerHTML = `ver 0.3 AP &copy; ${currentYear}`;
 
 </script>
 </body>
