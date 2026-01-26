@@ -507,6 +507,31 @@ text-align:center;
 #setup .setup-input-group .date-wrapper input[type="date"]:focus {
 outline:none;
 }
+ #pullSpinner {
+    position: absolute;
+    top: 10px; /* top of app */
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    width: 30px;
+    height: 30px;
+    border: 4px solid rgba(255,255,255,0.2);
+    border-top-color: #03CF00;
+    border-radius: 50%;
+    z-index: 999;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0;
+  }
+
+#pullSpinner.active {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+    animation: spin 1s linear infinite;
+  }
+
+@keyframes spin {
+    0% { transform: translateX(-50%) rotate(0deg) scale(1); }
+    100% { transform: translateX(-50%) rotate(360deg) scale(1); }
+  }
 
 
 
@@ -557,7 +582,7 @@ outline:none;
   </div>
 </div>
 
-
+<div id="pullSpinner"></div>
 <div id="setup">
   <div class="setup-input-group">
     <sup>Starting Amount ($)</sup>
@@ -1147,7 +1172,53 @@ window.addEventListener("pageshow", (e) => {
     refreshOnResume();
   }
 });
+//PULL TO REFRESH FUNCTIONALITY
 
+const spinner = document.getElementById('pullSpinner');
+
+let startY = 0;
+let isPulling = false;
+let refreshTriggered = false;
+const threshold = 60; // px to pull before triggering
+
+document.addEventListener('touchstart', (e) => {
+  if (window.scrollY === 0) {
+    startY = e.touches[0].clientY;
+    isPulling = true;
+    refreshTriggered = false;
+  }
+});
+
+document.addEventListener('touchmove', (e) => {
+  if (!isPulling) return;
+
+  const currentY = e.touches[0].clientY;
+  const diff = currentY - startY;
+
+  if (diff > 0) {
+    spinner.style.transform = `translateX(-50%) scale(${Math.min(diff/threshold, 1)})`;
+    spinner.style.opacity = Math.min(diff/threshold, 1);
+  }
+
+  if (diff > threshold && !refreshTriggered) {
+    refreshTriggered = true;
+    spinner.classList.add('active');
+    refreshOnResume();
+
+    // Simulate spinner duration
+    setTimeout(() => {
+      spinner.classList.remove('active');
+      spinner.style.transform = 'translateX(-50%) scale(0)';
+      spinner.style.opacity = 0;
+    }, 1000); // 1s spinner
+  }
+});
+
+document.addEventListener('touchend', () => {
+  isPulling = false;
+  spinner.style.transform = 'translateX(-50%) scale(0)';
+  spinner.style.opacity = 0;
+});
 </script>
 </body>
 </html>
