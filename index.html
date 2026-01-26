@@ -509,7 +509,7 @@ outline:none;
 }
  #pullSpinner {
     position: absolute;
-    top: 10px; /* top of app */
+    top: 5px;
     left: 50%;
     transform: translateX(-50%) scale(0);
     width: 30px;
@@ -520,6 +520,7 @@ outline:none;
     z-index: 999;
     transition: transform 0.2s ease, opacity 0.2s ease;
     opacity: 0;
+	margin-bottom:10px;
   }
 
 #pullSpinner.active {
@@ -1222,3 +1223,4 @@ document.addEventListener('touchend', () => {
 </script>
 </body>
 </html>
+
