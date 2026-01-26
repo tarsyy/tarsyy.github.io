@@ -523,6 +523,7 @@ outline:none;
     opacity: 0;
     margin-bottom: 10px;
     pointer-events: none;
+	transition: opacity 0.5s ease; 
   }
 
   #pullSpinner.active {
@@ -541,51 +542,41 @@ outline:none;
 </head>
 
 <body>
-	<div id="pullSpinner"></div>
+<div id="pullSpinner"></div>
 <div class="container">
-  <h1 id="titleText">Paydown Progress</h1>
-  
-
+<h1 id="titleText">Paydown Progress</h1> 
 <!-- Overlay -->
 <div id="settingsOverlay" class="overlay">
   <div class="overlay-content">
     <h2>User Settings</h2>
-
     <div class="overlay-input-group">
       <sup>Starting Amount ($)</sup>
       <input id="overlayStartingAmount" type="number">
     </div>
-
     <div class="overlay-input-group">
       <sup>Current Amount ($)</sup>
       <input id="overlayCurrentAmount" type="number" >
     </div>
-
     <div class="overlay-input-group">
       <sup>Interest Rate (%)</sup>
       <input id="overlayInterestRate" type="number" >
     </div>
-
     <div class="overlay-input-group">
       <sup>Monthly Payment ($)</sup>
       <input id="overlayMonthlyPayment" type="number" >
     </div>
-
  <div class="overlay-input-group">
   <sup>Target Payoff Date</sup>
   <div class="date-wrapper">
     <input id="overlayTargetPayoffDate" type="date">
   </div>
 </div>
-
     <div class="overlay-buttons">
       <button id="saveSettingsBtn" style="background:#007aff;">Save</button>
       <button id="cancelSettingsBtn" style="background:#ff3b30;">Cancel</button>
     </div>
   </div>
 </div>
-
-
 <div id="setup">
   <div class="setup-input-group">
     <sup>Starting Amount ($)</sup>
@@ -1175,11 +1166,10 @@ window.addEventListener("pageshow", (e) => {
     refreshOnResume();
   }
 });
+
 //PULL TO REFRESH FUNCTIONALITY
-
 const spinner = document.getElementById('pullSpinner');
-
-// --- SETTINGS (customize here) ---
+// --- SETTINGS ---
 const pullThresholdToRefresh = 60;  // px pulled to trigger refresh on release
 const pullStartThreshold = 10;      // px pulled before spinner appears
 // ----------------------------------
@@ -1209,16 +1199,16 @@ document.addEventListener('touchmove', (e) => {
 
 document.addEventListener('touchend', () => {
   if (pullDistance >= pullThresholdToRefresh) {
-    // Trigger refresh only on release after hitting threshold
-    refreshOnResume();
+    refreshOnResume(); 
   }
-  
-  // Hide spinner after release
-  spinner.classList.remove('active');
+  spinner.style.opacity = 0;  
+  setTimeout(() => {
+    spinner.classList.remove('active');
+    spinner.style.opacity = '';
+  }, 500);
   isPulling = false;
   pullDistance = 0;
 });
 </script>
 </body>
 </html>
-
