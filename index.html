@@ -1170,8 +1170,8 @@ window.addEventListener("pageshow", (e) => {
 //PULL TO REFRESH FUNCTIONALITY
 const spinner = document.getElementById('pullSpinner');
 // --- SETTINGS ---
-const pullThresholdToRefresh = 100;  // px pulled to trigger refresh on release
-const pullStartThreshold = 40;      // px pulled before spinner appears
+const pullThresholdToRefresh = 80;  // px pulled to trigger refresh on release
+const pullStartThreshold = 80;      // px pulled before spinner appears
 // ----------------------------------
 
 let startY = 0;
@@ -1212,4 +1212,5 @@ document.addEventListener('touchend', () => {
 </script>
 </body>
 </html>
+
 
