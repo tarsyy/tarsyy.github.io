@@ -595,8 +595,7 @@ outline:none;
   <div class="progress-container">
     <div class="progress-bar" id="progressBar"></div>
   </div>
-   <div id="resumeText"></div>
-  <div class="summary" id="summaryText"></div>
+   <div class="summary" id="summaryText"></div>
   <div class="additional-payment" id="additionalPaymentText"></div>
     <div class="next-payment" id="nextPaymentText"></div>
 
@@ -1135,43 +1134,17 @@ function refreshOnResume() {
   updateProgress();
 }
 
-// --- RESTORE COUNTER SETUP ---
-
-// Initialize counter from localStorage
-let restoreCount = parseInt(localStorage.getItem("restoreCount") || "0");
-
-// Grab the div where we'll show the count
-const resumeTextDiv = document.getElementById("resumeText");
-
-// Update div on initial load
-resumeTextDiv.textContent = `Restored: ${restoreCount}`;
-
-// Function to handle restore
-function handleRestore() {
-  // Increment counter
-  restoreCount++;
-  localStorage.setItem("restoreCount", restoreCount);
-
-  // Update the div
-  resumeTextDiv.textContent = `Restored: ${restoreCount}`;
-
-  // Call your existing refresh logic
-  refreshOnResume();
-}
-
-// --- EVENT LISTENERS ---
-
-// Trigger when tab/app becomes visible
+// When tab/app becomes visible again
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
-    handleRestore();
+    refreshOnResume();
   }
 });
 
-// Trigger for iOS Safari / PWA cache restores
+// iOS Safari / PWA restore from cache
 window.addEventListener("pageshow", (e) => {
   if (e.persisted) {
-    handleRestore();
+    refreshOnResume();
   }
 });
 
