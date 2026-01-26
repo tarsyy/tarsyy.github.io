@@ -19,6 +19,12 @@ body {
   justify-content: center;
 }
 
+body.no-scroll {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
 .container {
   max-width: 430px;
   width: 100%;
@@ -339,8 +345,10 @@ button:disabled {
   align-items: center;
   z-index: 999;
   opacity: 0; 
-  pointer-events: none; 
+  pointer-events: none;   
+  touch-action: none;
   transition: opacity 0.4s ease, backdrop-filter 0.4s ease;
+  
 }
 
 .overlay.show {
@@ -665,6 +673,23 @@ const cancelAddPayment = document.getElementById('cancelAddPayment');
 const toggleAddPayment = document.getElementById('toggleAddPayment');
 
 
+let scrollPosition = 0;
+
+function disableScroll() {
+  scrollPosition = window.scrollY;
+
+  document.body.classList.add('no-scroll');
+  document.body.style.top = `-${scrollPosition}px`;
+}
+
+function enableScroll() {
+  document.body.classList.remove('no-scroll');
+  document.body.style.top = '';
+
+  window.scrollTo(0, scrollPosition);
+}
+
+
 // Open overlay
 editSettingsBtn.onclick = () => {
   const saved = JSON.parse(localStorage.getItem('debtTracker'));
@@ -676,11 +701,13 @@ editSettingsBtn.onclick = () => {
     overlayTargetPayoffDate.value = saved.targetPayoffDate || '';
   }
   settingsOverlay.classList.add('show');
+  disableScroll();
 };
 
 // Close overlay
 cancelSettingsBtn.onclick = () => {
   settingsOverlay.classList.remove('show');
+   enableScroll();
 };
 // Save overlay
 saveSettingsBtn.onclick = () => {
@@ -730,8 +757,10 @@ saveSettingsBtn.onclick = () => {
   applyMonthlyLogic();
   updateProgress();
   saveTracker();
-    settingsOverlay.classList.remove('show');
+  settingsOverlay.classList.remove('show');
+  enableScroll();
 };
+
 const startingAmountInput = document.getElementById('startingAmount');
 const currentAmountInput  = document.getElementById('currentAmount');
 const interestRateInput   = document.getElementById('interestRate');
@@ -1128,7 +1157,7 @@ const dateValue = targetDateInput.value;
 
 const ftr = document.getElementById('ftr');
 const currentYear = new Date().getFullYear();
-ftr.innerHTML = `ver 0.06 AP &copy; ${currentYear}`;
+ftr.innerHTML = `ver 0.07 AP &copy; ${currentYear}`;
 
 
 // --- REFRESH ON RESUME LOGIC ---
@@ -1180,8 +1209,8 @@ document.addEventListener('touchmove', (e) => {
   if (pullDistance >= pullThresholdToRefresh && !spinnerVisible) {
     // Show spinner
     spinnerVisible = true;
-    spinner.classList.add('active');  // fade-in CSS
-    spinner.style.opacity = '';        // ensure opacity is reset
+    spinner.classList.add('active');  
+    spinner.style.opacity = '';        
 
     // Refresh data
     refreshOnResume();
@@ -1203,8 +1232,6 @@ document.addEventListener('touchend', () => {
   pullDistance = 0;
   spinnerVisible = false;
 });
-
 </script>
 </body>
 </html>
-
