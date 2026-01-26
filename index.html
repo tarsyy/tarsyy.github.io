@@ -235,8 +235,6 @@ button:disabled {
   flex: 1;
   margin-bottom: 0;
 }
-
-/* Cancel (X) button */
 .cancel-btn {
   width: 48px;
   height: 48px;
@@ -246,14 +244,11 @@ button:disabled {
   border-radius: 12px;
   font-size: 22px;
 }
-
-/* Summary text */
 .summary {
   margin-top: 10px;
   user-select:none;
   text-align:center;
 }
-
 .next-payment {
   font-size: 11px;
   font-style: italic;
@@ -262,8 +257,6 @@ button:disabled {
   text-align:center;
   user-select:none;
 }
-
-/* Add Payment toggle */
 #toggleAddPayment {
   margin-top: 12px;
 }
@@ -271,10 +264,9 @@ button:disabled {
 #toggleAddPayment.active {
   background-color: #2e6f40;
 }
-
 .payment-float {
   position: absolute;
-  top: -20px; /* start higher above the bar */
+  top: -20px;
   left: 50%;
   transform: translateX(-50%);
   font-size: 16px;
@@ -290,21 +282,19 @@ button:disabled {
   user-select:none;
   z-index: 999;
 }
-
 @keyframes floatFade {
   0% {
     opacity: 0;
-    transform: translateX(-50%) translateY(10px); /* start slightly below top */
+    transform: translateX(-50%) translateY(10px); 
   }
   20% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translateX(-50%) translateY(-40px); /* float higher */
+    transform: translateX(-50%) translateY(-40px); 
   }
 }
-
 #ftr {
   position: absolute;       
   bottom: -5px;             
@@ -315,15 +305,11 @@ button:disabled {
   pointer-events: none;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
-
-
-
 @media (hover: hover) {
   button:hover {
     filter: brightness(1.1);
   }
 }
-
 #interestWrapper {
   display: none;
   gap: 8px;
@@ -432,15 +418,12 @@ font-size:0.9rem;
 user-select:none;
 text-align:center;
 }
-
 .date-wrapper {
   position: relative;
   border-radius: 12px;
-  background-color: #2a2a2a; /* matches the other inputs */
+  background-color: #2a2a2a; 
   overflow: hidden;
 }
-
-
 .date-wrapper input[type="date"] {
   position: relative;
   z-index: 1;
@@ -455,8 +438,6 @@ text-align:center;
   background-color: transparent; 
   -webkit-appearance: none; 
 }
-
-
 .date-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
   right: 14px;
   height: 24px;
@@ -469,21 +450,18 @@ text-align:center;
 #setup .setup-input-group input[type="date"] {
   height: 44px;
   font-size: 16px;
-  padding: 0 14px;        /* horizontal padding */
+  padding: 0 14px;     /
   border-radius: 12px;
   border: none;
   background: #2a2a2a;
   color: #e0e0e0;
   box-sizing: border-box;
-  line-height: normal;    /* reset so Safari doesn't stretch */
+  line-height: normal;   
 }
-
 /* Date wrapper for setup */
 #setup .setup-input-group .date-wrapper {         
   height: 44px;
-
 }
-
 /* Date input inside wrapper */
 #setup .setup-input-group .date-wrapper input[type="date"] {
   -webkit-appearance: none;   
@@ -1179,8 +1157,8 @@ window.addEventListener("pageshow", (e) => {
 //PULL TO REFRESH FUNCTIONALITY
 const spinner = document.getElementById('pullSpinner');
 // --- SETTINGS ---
-const pullThresholdToRefresh = 85;  // px pulled to trigger refresh on release
-const pullStartThreshold = 80;      // px pulled before spinner appears
+const pullThresholdToRefresh = 1;  // px pulled to trigger refresh on release
+//const pullStartThreshold = 40;      // px pulled before spinner appears--not used at this time
 // ----------------------------------
 
 let startY = 0;
@@ -1201,7 +1179,7 @@ document.addEventListener('touchmove', (e) => {
   const currentY = e.touches[0].clientY;
   pullDistance = currentY - startY;
 
-  if (pullDistance > pullStartThreshold) {
+  if (pullDistance > 0) {
     spinner.classList.add('active');
   }
 });
@@ -1221,6 +1199,7 @@ document.addEventListener('touchend', () => {
 </script>
 </body>
 </html>
+
 
 
 
