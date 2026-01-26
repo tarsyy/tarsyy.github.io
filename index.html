@@ -512,20 +512,19 @@ outline:none;
 
 
 #pullSpinner {
-    position: fixed;
-    top: 5px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 30px;
-    height: 30px;
-    border: 4px solid rgba(255,255,255,0.2);
-    border-top-color: #fff; 
-    border-radius: 50%;
-    z-index: 0;
-    opacity: 0;
-    margin-bottom: 10px;
-    pointer-events: none;
-	transition: opacity 0.5s ease; 
+  position: fixed;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 30px;
+  border: 4px solid rgba(255,255,255,0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  z-index: 1; /* below the mask */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
   }
 
   #pullSpinner.active {
@@ -537,7 +536,17 @@ outline:none;
     0% { transform: translateX(-50%) rotate(0deg); }
     100% { transform: translateX(-50%) rotate(360deg); }
   }
-
+	
+#spinnerMask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50px; 
+  background-color: #000; 
+  z-index: 2; 
+  pointer-events: none; 
+}
 
 
 </style>
@@ -546,6 +555,7 @@ outline:none;
 <body>
 <div id="pullSpinner"></div>
 <div class="container">
+ <div id="spinnerMask"></div>
 <h1 id="titleText">Paydown Progress</h1> 
 <!-- Overlay -->
 <div id="settingsOverlay" class="overlay">
@@ -1214,6 +1224,7 @@ document.addEventListener('touchend', () => {
 </script>
 </body>
 </html>
+
 
 
 
