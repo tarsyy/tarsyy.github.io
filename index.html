@@ -24,6 +24,7 @@ body {
   width: 100%;
   padding: 20px;
   position: relative; 
+  z-index:1;
 }
 
 /* Headings */
@@ -519,7 +520,7 @@ outline:none;
     border: 4px solid rgba(255,255,255,0.2);
     border-top-color: #fff; 
     border-radius: 50%;
-    z-index: 1;
+    z-index: 0;
     opacity: 0;
     margin-bottom: 10px;
     pointer-events: none;
@@ -1170,8 +1171,8 @@ window.addEventListener("pageshow", (e) => {
 //PULL TO REFRESH FUNCTIONALITY
 const spinner = document.getElementById('pullSpinner');
 // --- SETTINGS ---
-const pullThresholdToRefresh = 80;  // px pulled to trigger refresh on release
-const pullStartThreshold = 80;      // px pulled before spinner appears
+const pullThresholdToRefresh = 120;  // px pulled to trigger refresh on release
+const pullStartThreshold = 120;      // px pulled before spinner appears
 // ----------------------------------
 
 let startY = 0;
@@ -1212,5 +1213,6 @@ document.addEventListener('touchend', () => {
 </script>
 </body>
 </html>
+
 
 
