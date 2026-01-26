@@ -491,47 +491,48 @@ text-align:center;
   -moz-appearance: none;
   appearance: none;
   width: 100%;
-  height: auto;               /* let flex + padding control height */
+  height: auto;           
   font-size: 16px;
-  padding: 10px 14px;         /* vertical padding to center text */
+  padding: 10px 14px;         
   border: none;
   border-radius: 12px;
   background-color: transparent;
   color: #e0e0e0;
   box-sizing: border-box;
-  line-height: normal;         /* reset Safari stretching */
-  display: block;              /* ensure proper centering */
+  line-height: normal;        
+  display: block;           
 }
 
 /* Date input focus outline */
 #setup .setup-input-group .date-wrapper input[type="date"]:focus {
 outline:none;
 }
- #pullSpinner {
-    position: absolute;
+
+
+#pullSpinner {
+    position: fixed;
     top: 5px;
     left: 50%;
-    transform: translateX(-50%) scale(0);
+    transform: translateX(-50%);
     width: 30px;
     height: 30px;
     border: 4px solid rgba(255,255,255,0.2);
-    border-top-color: #03CF00;
+    border-top-color: #fff; 
     border-radius: 50%;
-    z-index: 999;
-    transition: transform 0.2s ease, opacity 0.2s ease;
+    z-index: 99999;
     opacity: 0;
-	margin-bottom:10px;
+    margin-bottom: 10px;
+    pointer-events: none;
   }
 
-#pullSpinner.active {
-    transform: translateX(-50%) scale(1);
+  #pullSpinner.active {
     opacity: 1;
     animation: spin 1s linear infinite;
   }
 
-@keyframes spin {
-    0% { transform: translateX(-50%) rotate(0deg) scale(1); }
-    100% { transform: translateX(-50%) rotate(360deg) scale(1); }
+  @keyframes spin {
+    0% { transform: translateX(-50%) rotate(0deg); }
+    100% { transform: translateX(-50%) rotate(360deg); }
   }
 
 
@@ -1177,16 +1178,20 @@ window.addEventListener("pageshow", (e) => {
 
 const spinner = document.getElementById('pullSpinner');
 
+// --- SETTINGS (customize here) ---
+const pullThresholdToRefresh = 60;  // px pulled to trigger refresh on release
+const pullStartThreshold = 10;      // px pulled before spinner appears
+// ----------------------------------
+
 let startY = 0;
 let isPulling = false;
-let refreshTriggered = false;
-const threshold = 60; // px to pull before triggering
+let pullDistance = 0;
 
 document.addEventListener('touchstart', (e) => {
   if (window.scrollY === 0) {
     startY = e.touches[0].clientY;
     isPulling = true;
-    refreshTriggered = false;
+    pullDistance = 0;
   }
 });
 
@@ -1194,33 +1199,24 @@ document.addEventListener('touchmove', (e) => {
   if (!isPulling) return;
 
   const currentY = e.touches[0].clientY;
-  const diff = currentY - startY;
+  pullDistance = currentY - startY;
 
-  if (diff > 0) {
-    spinner.style.transform = `translateX(-50%) scale(${Math.min(diff/threshold, 1)})`;
-    spinner.style.opacity = Math.min(diff/threshold, 1);
-  }
-
-  if (diff > threshold && !refreshTriggered) {
-    refreshTriggered = true;
+  if (pullDistance > pullStartThreshold) {
     spinner.classList.add('active');
-    refreshOnResume();
-
-    // Simulate spinner duration
-    setTimeout(() => {
-      spinner.classList.remove('active');
-      spinner.style.transform = 'translateX(-50%) scale(0)';
-      spinner.style.opacity = 0;
-    }, 1000); // 1s spinner
   }
 });
 
 document.addEventListener('touchend', () => {
+  if (pullDistance >= pullThresholdToRefresh) {
+    // Trigger refresh only on release after hitting threshold
+    refreshOnResume();
+  }
+  
+  // Hide spinner after release
+  spinner.classList.remove('active');
   isPulling = false;
-  spinner.style.transform = 'translateX(-50%) scale(0)';
-  spinner.style.opacity = 0;
+  pullDistance = 0;
 });
 </script>
 </body>
 </html>
-
