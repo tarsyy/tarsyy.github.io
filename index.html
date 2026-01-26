@@ -1128,7 +1128,7 @@ const dateValue = targetDateInput.value;
 
 const ftr = document.getElementById('ftr');
 const currentYear = new Date().getFullYear();
-ftr.innerHTML = `ver 0.4 AP &copy; ${currentYear}`;
+ftr.innerHTML = `ver 0.05 AP &copy; ${currentYear}`;
 
 
 // --- REFRESH ON RESUME LOGIC ---
@@ -1192,23 +1192,28 @@ document.addEventListener('touchmove', (e) => {
     }, 200);
   }
 });
-
 document.addEventListener('touchend', () => {
-  if (spinnerActive) {
-    spinner.style.opacity = 0;
-    setTimeout(() => {
-      spinner.classList.remove('active');
-      spinner.style.opacity = '';
-      spinnerActive = false;
-    }, 500);
+  if (pullDistance >= pullThresholdToRefresh) {
+    refreshOnResume(); 
   }
 
+  // Remove active immediately so next pull can re-add
+  spinner.classList.remove('active');
+
+  // Fade out via opacity
+  spinner.style.opacity = 0;
+  setTimeout(() => {
+    spinner.style.opacity = '';
+  }, 500);
+
   isPulling = false;
+  pullDistance = 0;
 });
 
 </script>
 </body>
 </html>
+
 
 
 
