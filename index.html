@@ -1128,7 +1128,7 @@ const dateValue = targetDateInput.value;
 
 const ftr = document.getElementById('ftr');
 const currentYear = new Date().getFullYear();
-ftr.innerHTML = `ver 0.05 AP &copy; ${currentYear}`;
+ftr.innerHTML = `ver 0.06 AP &copy; ${currentYear}`;
 
 
 // --- REFRESH ON RESUME LOGIC ---
@@ -1154,18 +1154,20 @@ window.addEventListener("pageshow", (e) => {
   }
 });
 
-// PULL TO REFRESH FUNCTIONALITY
+// --- PULL TO REFRESH ---
 const spinner = document.getElementById('pullSpinner');
-const pullThresholdToRefresh = 1; // px pulled to trigger refresh
+const pullThresholdToRefresh = 10;  // px to trigger spinner & refresh
 
 let startY = 0;
 let isPulling = false;
-let spinnerActive = false;
+let pullDistance = 0;
+let spinnerVisible = false;
 
 document.addEventListener('touchstart', (e) => {
   if (window.scrollY === 0) {
     startY = e.touches[0].clientY;
     isPulling = true;
+    pullDistance = 0;
   }
 });
 
@@ -1173,54 +1175,35 @@ document.addEventListener('touchmove', (e) => {
   if (!isPulling) return;
 
   const currentY = e.touches[0].clientY;
-  const pullDistance = currentY - startY;
+  pullDistance = currentY - startY;
 
-  if (pullDistance > 0) {
-    // Show spinner if not already visible
-    if (!spinnerActive) {
-      spinnerActive = true;
-      spinner.classList.add('active');
-      spinner.style.opacity = 1;
-      refreshOnResume(); // run immediately when spinner becomes visible
-    }
-  } else if (spinnerActive) {
-    spinner.style.opacity = 0;
-    setTimeout(() => {
-      spinner.classList.remove('active');
-      spinner.style.opacity = '';
-      spinnerActive = false;
-    }, 200);
+  if (pullDistance >= pullThresholdToRefresh && !spinnerVisible) {
+    // Show spinner
+    spinnerVisible = true;
+    spinner.classList.add('active');  // fade-in CSS
+    spinner.style.opacity = '';        // ensure opacity is reset
+
+    // Refresh data
+    refreshOnResume();
   }
 });
+
 document.addEventListener('touchend', () => {
-  if (pullDistance >= pullThresholdToRefresh) {
-    refreshOnResume(); 
+  if (spinnerVisible) {
+    // Fade out spinner
+    spinner.style.opacity = 0;
+    setTimeout(() => {
+      spinner.classList.remove('active'); 
+      spinner.style.opacity = '';          
+    }, 500);
   }
 
-  // Remove active immediately so next pull can re-add
-  spinner.classList.remove('active');
-
-  // Fade out via opacity
-  spinner.style.opacity = 0;
-  setTimeout(() => {
-    spinner.style.opacity = '';
-  }, 500);
-
+  // Reset for next pull
   isPulling = false;
   pullDistance = 0;
+  spinnerVisible = false;
 });
 
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
