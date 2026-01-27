@@ -64,7 +64,6 @@ input:focus {
   outline-offset: 2px;       
   background-color: #2a2a2a; 
 }
-/* Buttons – iOS touch optimized */
 button {
   background: #007aff;
   color: #fff;
@@ -105,21 +104,16 @@ button:disabled {
   margin: 20px 0;
   border-radius: 20px;
   overflow: hidden;
-
-
   background: #000000;
 
   /* Glass depth */
   box-shadow:
     inset 0 1px 3px rgba(255,255,255,0.7),   
     inset 0 -4px 6px rgba(0,0,0,1);        
-
-
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   clip-path: inset(0 round 20px);
 }
-
 
 .progress-container::after {
   content: "";
@@ -198,9 +192,6 @@ button:disabled {
     background-position: 200% 50%;
   }
 }
-
-
-
 /* RGB celebration */
 .progress-bar.finished {
   animation: rgbPulse 2s linear infinite;
@@ -356,8 +347,6 @@ button:disabled {
   backdrop-filter: blur(8px);
   pointer-events: auto; 
 }
-
-
 .overlay-content {
   background: #1e1e1e;
   padding: 30px;
@@ -381,7 +370,6 @@ button:disabled {
   color: #fff;
   text-align: center;
 }
-
 .overlay-content input {
   padding: 12px;
   font-size: 16px;
@@ -390,14 +378,12 @@ button:disabled {
   background: #2a2a2a;
   color: #e0e0e0;
 }
-
 .overlay-buttons {
   display: flex;
   gap: 10px;
   margin-top: 10px;
 
 }
-
 .overlay-buttons button {
   flex: 1;
   padding: 12px;
@@ -406,20 +392,17 @@ button:disabled {
   border-top:2px solid rgba(255,255,255,0.6);
   color: #fff;
   cursor: pointer;
-
 }
 .overlay-input-group {
   display: flex;
   flex-direction: column;
 }
-
 .overlay-input-group sup {
   color: #aaa;
   font-size: 12px;
   margin-bottom: 4px;
   text-align: left;
 }
-
 #additionalPaymentText{
 margin-top:5px;
 font-size:0.9rem;
@@ -444,7 +427,6 @@ text-align:center;
   color: #e0e0e0;
   box-sizing: border-box;
   background-color: transparent; 
-  -webkit-appearance: none; 
 }
 .date-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
   right: 14px;
@@ -452,13 +434,12 @@ text-align:center;
   width: 24px;
   filter: invert(1);
 }
-
 /* Setup number & date inputs */
 #setup .setup-input-group input[type="number"],
 #setup .setup-input-group input[type="date"] {
   height: 44px;
   font-size: 16px;
-  padding: 0 14px;     /
+  padding: 0 14px;     
   border-radius: 12px;
   border: none;
   background: #2a2a2a;
@@ -849,7 +830,7 @@ document.getElementById('startLabel').textContent =
 
 document.getElementById('summaryText').textContent =
   `${moneyFormatter.format(paid)} of ${moneyFormatter.format(startingAmount)} (${pct.toFixed(1)}%) paid off!`;
-
+}
 
 function showPaymentFloat(amount) {
   const container = document.querySelector('.container'); 
@@ -965,10 +946,6 @@ resetBtn.onclick=()=>{
     location.reload();
   }
 };
-
-
-
-
 
 const exportBtn = document.getElementById('exportBtn');
 const importBtn = document.getElementById('importBtn');
@@ -1239,4 +1216,3 @@ document.addEventListener('touchend', () => {
 </script>
 </body>
 </html>
-
