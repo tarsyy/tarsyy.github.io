@@ -672,8 +672,14 @@ const extraPaymentInput = document.getElementById('extraPaymentInput');
 const cancelAddPayment = document.getElementById('cancelAddPayment');
 const toggleAddPayment = document.getElementById('toggleAddPayment');
 
-
 let scrollPosition = 0;
+
+const moneyFormatter = new Intl.NumberFormat('en-CA', {
+  style: 'currency',
+  currency: 'CAD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
 
 function disableScroll() {
   scrollPosition = window.scrollY;
@@ -838,12 +844,12 @@ function updateProgress() {
     pb.style.width = pct + '%';
   });
 
-  document.getElementById('startLabel').textContent =
-    `$${startingAmount.toFixed(2)}`;
+document.getElementById('startLabel').textContent =
+  moneyFormatter.format(startingAmount);
 
-  document.getElementById('summaryText').textContent =
-    `$${ paid.toFixed(2)} of $${ startingAmount.toFixed(2)} (${pct.toFixed(1)}%) paid off!`;
-}
+document.getElementById('summaryText').textContent =
+  `${moneyFormatter.format(paid)} of ${moneyFormatter.format(startingAmount)} (${pct.toFixed(1)}%) paid off!`;
+
 
 function showPaymentFloat(amount) {
   const container = document.querySelector('.container'); 
@@ -851,7 +857,7 @@ function showPaymentFloat(amount) {
 
   const el = document.createElement('div');
   el.className = 'payment-float';
-  el.textContent = `–$${amount.toFixed(2)}`;
+el.textContent = `–${moneyFormatter.format(amount)}`;
   container.appendChild(el);
 
  
@@ -1148,8 +1154,7 @@ const dateValue = targetDateInput.value;
     additionalText.textContent =
       `Current monthly payment is enough to meet target date (${formattedDate}).`;
   } else {
-    additionalText.textContent =
-      `You will need to pay an additional $${additionalPerMonth.toFixed(2)} per month to finish by ${formattedDate}.`;
+   `You will need to pay an additional ${moneyFormatter.format(additionalPerMonth)} per month to finish by ${formattedDate}.`;
   }
 }
 
@@ -1157,9 +1162,8 @@ const dateValue = targetDateInput.value;
 
 const ftr = document.getElementById('ftr');
 const currentYear = new Date().getFullYear();
-ftr.innerHTML = `ver 0.07 AP &copy; ${currentYear}`;
-
-
+ftr.innerHTML = `ver 0.08 AP &copy; ${currentYear}`;
+	
 // --- REFRESH ON RESUME LOGIC ---
 
 function refreshOnResume() {
@@ -1235,3 +1239,4 @@ document.addEventListener('touchend', () => {
 </script>
 </body>
 </html>
+
