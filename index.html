@@ -980,7 +980,7 @@ exportBtn.onclick = () => {
   const month = monthNames[now.getMonth()];
   const day = String(now.getDate()).padStart(2, '0');
   const year = now.getFullYear();
-  const filename = `user-settings_${month}${day}_${year}.json`;
+  const filename = `paydowndataexp_${month}${day}_${year}.json`;
 
   const a = document.createElement('a');
   a.href = url;
@@ -1225,4 +1225,5 @@ document.addEventListener('touchend', () => {
 </script>
 </body>
 </html>
+
 
