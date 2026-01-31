@@ -887,6 +887,7 @@ const dayLabel = daysAway === 1 ? 'day' : 'days';
 
 document.getElementById('nextPaymentText').textContent =
   `Next monthly payment: ${formattedDate} (${daysAway} ${dayLabel} away)`;
+  }
 
 startBtn.onclick = () => {
   startingAmount = parseFloat(startingAmountInput.value);
@@ -980,7 +981,7 @@ exportBtn.onclick = () => {
   const month = monthNames[now.getMonth()];
   const day = String(now.getDate()).padStart(2, '0');
   const year = now.getFullYear();
-  const filename = `paydowndataexp_${month}${day}_${year}.json`;
+const filename = `debt_${year}${month}${day}.json`;
 
   const a = document.createElement('a');
   a.href = url;
@@ -1225,5 +1226,3 @@ document.addEventListener('touchend', () => {
 </script>
 </body>
 </html>
-
-
