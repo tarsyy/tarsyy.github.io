@@ -820,10 +820,18 @@ function updateProgress() {
     updateAdditionalPaymentText();
   }
 
-  // Force redraw
-  requestAnimationFrame(() => {
-    pb.style.width = pct + '%';
-  });
+pb.style.transition = 'none';
+pb.style.width = '0%';
+
+// Force reflow
+pb.offsetHeight;
+
+// Restore animation
+pb.style.transition = 'width 0.4s ease';
+
+requestAnimationFrame(() => {
+  pb.style.width = pct + '%';
+});
 
 document.getElementById('startLabel').textContent =
   moneyFormatter.format(startingAmount);
@@ -875,9 +883,10 @@ function updateNextPaymentText() {
   const options = { year: 'numeric', month: 'long', day: 'numeric' };
   const formattedDate = nextPaymentDate.toLocaleDateString(undefined, options);
 
-  document.getElementById('nextPaymentText').textContent =
-    `Next monthly payment: ${formattedDate} (${daysAway} days away)`;
-}
+const dayLabel = daysAway === 1 ? 'day' : 'days';
+
+document.getElementById('nextPaymentText').textContent =
+  `Next monthly payment: ${formattedDate} (${daysAway} ${dayLabel} away)`;
 
 startBtn.onclick = () => {
   startingAmount = parseFloat(startingAmountInput.value);
@@ -1192,7 +1201,7 @@ document.addEventListener('touchmove', (e) => {
     spinnerVisible = true;
     spinner.classList.add('active');  
     spinner.style.opacity = '';        
-
+sss
     // Refresh data
     refreshOnResume();
   }
@@ -1216,3 +1225,4 @@ document.addEventListener('touchend', () => {
 </script>
 </body>
 </html>
+
