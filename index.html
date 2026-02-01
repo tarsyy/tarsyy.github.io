@@ -787,28 +787,35 @@ const setup = document.getElementById('setup');
 const wrapper = document.getElementById('addPaymentWrapper');
 const addBtn = document.getElementById('toggleAddPayment');
 
-function applyMonthlyLogic(){
+function applyMonthlyLogic() {
   const now = new Date();
   let m = +localStorage.getItem('lastMonth');
   let y = +localStorage.getItem('lastYear');
 
-  if(isNaN(m)){
+  if (isNaN(m)) {
     localStorage.setItem('lastMonth', now.getMonth());
     localStorage.setItem('lastYear', now.getFullYear());
     return;
   }
 
-  while(y < now.getFullYear() || (y === now.getFullYear() && m < now.getMonth())){
-    currentAmount += currentAmount * (interestRate/100) / 12;
-    currentAmount -= monthlyPayment;
-    if(currentAmount < 0) currentAmount = 0;
+  // Apply interest/payment for every unprocessed month
+  while (y < now.getFullYear() || (y === now.getFullYear() && m <= now.getMonth())) {
+    currentAmount += currentAmount * (interestRate/100) / 12; // add monthly interest
+    currentAmount -= monthlyPayment; // subtract monthly payment
+    if (currentAmount < 0) currentAmount = 0;
+
+    // Increment month
     m++;
-    if(m > 11){ m = 0; y++; }
+    if (m > 11) { m = 0; y++; }
+
+    // Stop if we reached the current month
+    if (y === now.getFullYear() && m > now.getMonth()) break;
   }
 
   localStorage.setItem('lastMonth', m);
   localStorage.setItem('lastYear', y);
 }
+
 
 function saveTracker() {
   localStorage.setItem('debtTracker', JSON.stringify({
