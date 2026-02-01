@@ -40,6 +40,7 @@ h1 {
   color: #fff;
   margin-bottom: 20px;
   user-select:none;
+    margin-bottom: 40px;
 }
 
 /* Shared form controls */
@@ -107,7 +108,7 @@ button:disabled {
   background: #000000;
 
   /* Glass depth */
-  box-shadow:
+  box-shadow:                     
     inset 0 1px 3px rgba(255,255,255,0.7),   
     inset 0 -4px 6px rgba(0,0,0,1);        
   transform: translateZ(0);
@@ -209,13 +210,21 @@ button:disabled {
 
 /* Superscript labels */
 .superscript-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-  color: #aaa;
-  user-select:none;
+  position: relative; /* container for absolute positioning */
+  height: 0; /* so it doesn't take vertical space */
 }
 
+#currentAmountLabel {
+
+  position: absolute;
+  font-size: 14px;
+  font-weight: 600;
+  color: #aaa;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  transition: left 0.4s ease;
+}
 /* Add payment row */
 .add-payment-wrapper {
   display: none;
@@ -511,6 +520,20 @@ outline:none;
   z-index: 2; 
   pointer-events: none; 
 }
+.progress-current-label {
+  position: absolute;
+  top: 0; /* adjust to sit above bar */
+  font-size: 14px;
+  font-weight: 600;
+  color: #03CF00;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  transition: left 0.4s ease;
+  z-index: 10;
+}
+
+
 
 
 </style>
@@ -583,13 +606,15 @@ outline:none;
 
 <div id="tracker" style="display:none;">
   <div class="superscript-labels">
-    <div id="startLabel"></div>
-    <div>$0</div>
-  </div>
+  <div id="currentAmountLabel"></div>
+</div>
+<div class="progress-container">
+  <div class="progress-bar" id="progressBar"></div>
+</div>
+<div class="superscript-labels">
+  <div id="currentAmountLabel"></div>
+</div>
 
-  <div class="progress-container">
-    <div class="progress-bar" id="progressBar"></div>
-  </div>
    <div class="summary" id="summaryText"></div>
   <div class="additional-payment" id="additionalPaymentText"></div>
     <div class="next-payment" id="nextPaymentText"></div>
@@ -800,45 +825,63 @@ function updateProgress() {
 
   const paid = startingAmount - currentAmount;
   const pct = Math.min((paid / startingAmount) * 100, 100);
-  const title = document.getElementById('titleText');
+  const title = document.getElementById("titleText");
 
-
+  // Reset progress bar classes
   pb.className = 'progress-bar';
 
   if (currentAmount <= 0) {
     pb.classList.add('finished');
     addBtn.style.display = 'none';
     wrapper.style.display = 'none';
-       document.getElementById('summaryText').textContent = "Debt Paid Off!";
+    document.getElementById('summaryText').textContent = "Debt Paid Off!";
     document.getElementById('nextPaymentText').textContent = '';
-	document.getElementById('additionalPaymentText').textContent='';
-	document.getElementById('editSettingsBtn').style.display = "none";
+    document.getElementById('additionalPaymentText').textContent = '';
+    document.getElementById('editSettingsBtn').style.display = "none";
     title.textContent = "DEBT PAID OFF! 🎉";
+
   } else {
     pb.classList.add('flowing');
     updateNextPaymentText();
     updateAdditionalPaymentText();
   }
 
-pb.style.transition = 'none';
-pb.style.width = '0%';
 
-// Force reflow
-pb.offsetHeight;
+  pb.style.transition = 'none';
+  pb.style.width = '0%';
+  pb.offsetHeight; 
+  pb.style.transition = 'width 0.4s ease';
+  requestAnimationFrame(() => {
+    pb.style.width = pct + '%';
+  });
 
-// Restore animation
-pb.style.transition = 'width 0.4s ease';
-
-requestAnimationFrame(() => {
-  pb.style.width = pct + '%';
-});
-
-document.getElementById('startLabel').textContent =
-  moneyFormatter.format(startingAmount);
-
-document.getElementById('summaryText').textContent =
-  `${moneyFormatter.format(paid)} of ${moneyFormatter.format(startingAmount)} (${pct.toFixed(1)}%) paid off!`;
+// --- SUPERSCRIPT LABEL ---
+const superscript = document.getElementById('currentAmountLabel'); 
+if (currentAmount <= 0) {
+  superscript.textContent = '';
+} else {
+  superscript.textContent = moneyFormatter.format(currentAmount) + ' remaining';
 }
+
+const barWidth = pb.parentElement.clientWidth;
+const labelWidth = superscript.offsetWidth;
+
+const labelOffsetFactor = 0; // 0 = left-align, 0.5 = center, 1 = right-align
+let leftPos = (pct / 100) * barWidth - labelWidth * labelOffsetFactor;
+
+// clamp to container
+leftPos = Math.max(0, Math.min(leftPos, barWidth - labelWidth));
+
+superscript.style.left = leftPos + 'px';
+
+// Fine-tune vertical position above the progress bar
+superscript.style.top = '-25px'; // more space above the bar
+
+  document.getElementById('summaryText').textContent =
+    `${moneyFormatter.format(paid)} of ${moneyFormatter.format(startingAmount)} (${pct.toFixed(1)}%) paid off!`;
+}
+
+
 
 function showPaymentFloat(amount) {
   const container = document.querySelector('.container'); 
@@ -1137,19 +1180,21 @@ const dateValue = targetDateInput.value;
     day: 'numeric'
   });
 
-  if (additionalPerMonth <= 0) {
-    additionalText.textContent =
-      `Current monthly payment is enough to meet target date (${formattedDate}).`;
-  } else {
-   `You will need to pay an additional ${moneyFormatter.format(additionalPerMonth)} per month to finish by ${formattedDate}.`;
-  }
+if (additionalPerMonth <= 0) {
+  additionalText.textContent =
+    `Current monthly payment is enough to meet target date (${formattedDate}).`;
+} else {
+  additionalText.textContent =
+    `You will need to pay an additional ${moneyFormatter.format(additionalPerMonth)} per month to finish by ${formattedDate}.`;
+}
+
 }
 
 
 
 const ftr = document.getElementById('ftr');
 const currentYear = new Date().getFullYear();
-ftr.innerHTML = `ver 0.08 AP &copy; ${currentYear}`;
+ftr.innerHTML = `ver 0.09 AP &copy; ${currentYear}`;
 	
 // --- REFRESH ON RESUME LOGIC ---
 
