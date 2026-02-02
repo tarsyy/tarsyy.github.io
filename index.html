@@ -484,42 +484,6 @@ outline:none;
 }
 
 
-#pullSpinner {
-  position: fixed;
-  top: 5px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 30px;
-  height: 30px;
-  border: 4px solid rgba(255,255,255,0.2);
-  border-top-color: #fff;
-  border-radius: 50%;
-  z-index: 1; 
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  }
-
-  #pullSpinner.active {
-    opacity: 1;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    0% { transform: translateX(-50%) rotate(0deg); }
-    100% { transform: translateX(-50%) rotate(360deg); }
-  }
-	
-#spinnerMask {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 50px; 
-  background-color: #000; 
-  z-index: 2; 
-  pointer-events: none; 
-}
 .progress-current-label {
   position: absolute;
   top: 0; /* adjust to sit above bar */
@@ -540,9 +504,9 @@ outline:none;
 </head>
 
 <body>
-<div id="pullSpinner"></div>
+
 <div class="container">
- <div id="spinnerMask"></div>
+
 <h1 id="titleText">Paydown Progress</h1> 
 <!-- Overlay -->
 <div id="settingsOverlay" class="overlay">
@@ -559,10 +523,6 @@ outline:none;
     <div class="overlay-input-group">
       <sup>Interest Rate (%)</sup>
       <input id="overlayInterestRate" type="number" >
-    </div>
-    <div class="overlay-input-group">
-      <sup>Monthly Payment ($)</sup>
-      <input id="overlayMonthlyPayment" type="number" >
     </div>
  <div class="overlay-input-group">
   <sup>Target Payoff Date</sup>
@@ -590,10 +550,6 @@ outline:none;
     <input id="interestRate" type="number" placeholder="Interest Rate (%)">
   </div>
   <div class="setup-input-group">
-    <sup>Monthly Payment ($)</sup>
-    <input id="monthlyPayment" type="number" placeholder="Monthly Payment ($)">
-  </div>
-  <div class="setup-input-group">
     <sup>Target Payoff Date</sup>
     <div class="date-wrapper">
       <input id="targetPayoffDate" type="date" placeholder="Target Payoff Date">
@@ -611,9 +567,7 @@ outline:none;
 <div class="progress-container">
   <div class="progress-bar" id="progressBar"></div>
 </div>
-<div class="superscript-labels">
-  <div id="currentAmountLabel"></div>
-</div>
+
 
    <div class="summary" id="summaryText"></div>
   <div class="additional-payment" id="additionalPaymentText"></div>
@@ -670,7 +624,6 @@ const settingsOverlay = document.getElementById('settingsOverlay');
 const overlayStartingAmount = document.getElementById('overlayStartingAmount');
 const overlayCurrentAmount = document.getElementById('overlayCurrentAmount');
 const overlayInterestRate = document.getElementById('overlayInterestRate');
-const overlayMonthlyPayment = document.getElementById('overlayMonthlyPayment');
 const overlayTargetPayoffDate = document.getElementById('overlayTargetPayoffDate');
 const saveSettingsBtn = document.getElementById('saveSettingsBtn');
 const cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
@@ -709,7 +662,6 @@ editSettingsBtn.onclick = () => {
     overlayStartingAmount.value = saved.startingAmount || 0;
     overlayCurrentAmount.value = saved.currentAmount || 0;
     overlayInterestRate.value = saved.interestRate || 0;
-    overlayMonthlyPayment.value = saved.monthlyPayment || 0;
     overlayTargetPayoffDate.value = saved.targetPayoffDate || '';
   }
   settingsOverlay.classList.add('show');
@@ -726,14 +678,12 @@ saveSettingsBtn.onclick = () => {
   const sa = parseFloat(overlayStartingAmount.value);
   const ca = parseFloat(overlayCurrentAmount.value);
   const ir = parseFloat(overlayInterestRate.value);
-  const mp = parseFloat(overlayMonthlyPayment.value);
   const tpd = overlayTargetPayoffDate.value;
 
   if (
     isNaN(sa) || sa <= 0 ||
     isNaN(ca) || ca < 0 || ca > sa ||
-    isNaN(ir) || ir < 0 ||
-    isNaN(mp) || mp <= 0
+    isNaN(ir) || ir < 0
   ) {
     alert("Please enter valid numeric values.");
     return;
@@ -743,7 +693,6 @@ saveSettingsBtn.onclick = () => {
   startingAmount = sa;
   currentAmount = ca;
   interestRate = ir;
-  monthlyPayment = mp;
   targetPayoffDate = tpd;
   
   targetDateInput.value = tpd;
@@ -751,14 +700,11 @@ saveSettingsBtn.onclick = () => {
   updateAdditionalPaymentText();
 
   // Save to localStorage
-  localStorage.setItem('debtTracker', JSON.stringify({startingAmount, currentAmount, interestRate, monthlyPayment, targetPayoffDate}));
+  localStorage.setItem('debtTracker', JSON.stringify({startingAmount, currentAmount, interestRate,targetPayoffDate}));
 
 
 
-  // Reset monthly tracking
-  const now = new Date();
-  localStorage.setItem('lastMonth', now.getMonth());
-  localStorage.setItem('lastYear', now.getFullYear());
+localStorage.removeItem('lastInterestApplied');
 
   // Show tracker if hidden
   setup.style.display = 'none';
@@ -776,10 +722,9 @@ saveSettingsBtn.onclick = () => {
 const startingAmountInput = document.getElementById('startingAmount');
 const currentAmountInput  = document.getElementById('currentAmount');
 const interestRateInput   = document.getElementById('interestRate');
-const monthlyPaymentInput = document.getElementById('monthlyPayment');
 
 
-let startingAmount=0, currentAmount=0, interestRate=0, monthlyPayment=0, targetPayoffDate='';
+let startingAmount=0, currentAmount=0, interestRate=0, targetPayoffDate='';
 
 const pb = document.getElementById('progressBar');
 const tracker = document.getElementById('tracker');
@@ -788,32 +733,30 @@ const wrapper = document.getElementById('addPaymentWrapper');
 const addBtn = document.getElementById('toggleAddPayment');
 
 function applyMonthlyLogic() {
+ if (interestRate <= 0 || currentAmount <= 0) return;
+
   const now = new Date();
-  let m = +localStorage.getItem('lastMonth');
-  let y = +localStorage.getItem('lastYear');
 
-  if (isNaN(m)) {
-    localStorage.setItem('lastMonth', now.getMonth());
-    localStorage.setItem('lastYear', now.getFullYear());
-    return;
-  }
+  // Only apply on the 1st
+  if (now.getDate() !== 1) return;
 
-  // Apply interest/payment for every unprocessed month
-  while (y < now.getFullYear() || (y === now.getFullYear() && m <= now.getMonth())) {
-    currentAmount += currentAmount * (interestRate/100) / 12; // add monthly interest
-    currentAmount -= monthlyPayment; // subtract monthly payment
-    if (currentAmount < 0) currentAmount = 0;
+  const monthKey = `${now.getFullYear()}-${now.getMonth() + 1}`;
+  const lastApplied = localStorage.getItem('lastInterestApplied');
 
-    // Increment month
-    m++;
-    if (m > 11) { m = 0; y++; }
+  // Already applied for this month → do nothing
+  if (lastApplied === monthKey) return;
 
-    // Stop if we reached the current month
-    if (y === now.getFullYear() && m > now.getMonth()) break;
-  }
+  // Apply monthly interest
+  const monthlyRate = (interestRate / 100) / 12;
+  currentAmount += currentAmount * monthlyRate;
 
-  localStorage.setItem('lastMonth', m);
-  localStorage.setItem('lastYear', y);
+  // Guard against tiny floating point noise
+  currentAmount = Math.round(currentAmount * 100) / 100;
+
+  // Persist that we've applied interest this month
+  localStorage.setItem('lastInterestApplied', monthKey);
+
+  saveTracker();
 }
 
 
@@ -822,7 +765,6 @@ function saveTracker() {
     startingAmount,
     currentAmount,
     interestRate,
-    monthlyPayment,
     targetPayoffDate
   }));
 }
@@ -849,7 +791,6 @@ function updateProgress() {
 
   } else {
     pb.classList.add('flowing');
-    updateNextPaymentText();
     updateAdditionalPaymentText();
   }
 
@@ -876,13 +817,11 @@ const labelWidth = superscript.offsetWidth;
 const labelOffsetFactor = 0; // 0 = left-align, 0.5 = center, 1 = right-align
 let leftPos = (pct / 100) * barWidth - labelWidth * labelOffsetFactor;
 
-// clamp to container
+
 leftPos = Math.max(0, Math.min(leftPos, barWidth - labelWidth));
 
 superscript.style.left = leftPos + 'px';
-
-// Fine-tune vertical position above the progress bar
-superscript.style.top = '-25px'; // more space above the bar
+superscript.style.top = '-25px'; 
 
   document.getElementById('summaryText').textContent =
     `${moneyFormatter.format(paid)} of ${moneyFormatter.format(startingAmount)} (${pct.toFixed(1)}%) paid off!`;
@@ -919,38 +858,16 @@ el.textContent = `–${moneyFormatter.format(amount)}`;
   setTimeout(() => el.remove(), 1600);
 }
 
-
-
-function updateNextPaymentText() {
-  const now = new Date();
-
-
-  const nextPaymentDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-
-  const diffMs = nextPaymentDate - now;
-  const daysAway = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  const formattedDate = nextPaymentDate.toLocaleDateString(undefined, options);
-
-const dayLabel = daysAway === 1 ? 'day' : 'days';
-
-document.getElementById('nextPaymentText').textContent =
-  `Next monthly payment: ${formattedDate} (${daysAway} ${dayLabel} away)`;
-  }
-
 startBtn.onclick = () => {
   startingAmount = parseFloat(startingAmountInput.value);
   currentAmount  = parseFloat(currentAmountInput.value);
   interestRate   = parseFloat(interestRateInput.value);
-  monthlyPayment = parseFloat(monthlyPaymentInput.value);
   targetPayoffDate = targetDateInput.value; 
 
   if (
     isNaN(startingAmount) || startingAmount <= 0 ||
     isNaN(currentAmount)  || currentAmount < 0 ||
     isNaN(interestRate)   || interestRate < 0 ||
-    isNaN(monthlyPayment) || monthlyPayment <= 0 ||
     !targetPayoffDate
   ) {
     alert("Please enter valid numeric values and select a target date.");
@@ -958,8 +875,6 @@ startBtn.onclick = () => {
   }
 
   const now = new Date();
-  localStorage.setItem('lastMonth', now.getMonth());
-  localStorage.setItem('lastYear', now.getFullYear());
 
   setup.style.display = 'none';
   tracker.style.display = 'block';
@@ -1019,7 +934,6 @@ exportBtn.onclick = () => {
     startingAmount,
     currentAmount,
     interestRate,
-    monthlyPayment,
     targetPayoffDate
   };
 
@@ -1050,24 +964,21 @@ fileInput.onchange = async (e) => {
     const text = await file.text();
     const importedData = JSON.parse(text);
 
-    const { startingAmount: sa, currentAmount: ca, interestRate: ir, monthlyPayment: mp, targetPayoffDate: tpd } = importedData;
+    const { startingAmount: sa, currentAmount: ca, interestRate: ir, targetPayoffDate: tpd } = importedData;
 
     // Validation
-    if (
-      typeof sa !== 'number' || sa <= 0 ||
-      typeof ca !== 'number' || ca < 0 || ca > sa ||
-      typeof ir !== 'number' || ir < 0 ||
-      typeof mp !== 'number' || mp <= 0
-    ) {
-      alert("Imported data contains invalid numbers. Please check your file.");
-      return;
-    }
-
+if (
+  typeof sa !== 'number' || sa <= 0 ||
+  typeof ca !== 'number' || ca < 0 || ca > sa ||
+  typeof ir !== 'number' || ir < 0
+) {
+  alert("Imported data contains invalid numbers. Please check your file.");
+  return;
+}
     // Apply to variables
     startingAmount = sa;
     currentAmount = ca;
     interestRate = ir;
-    monthlyPayment = mp;
 
     // Restore target date if present
     if (tpd) {
@@ -1081,7 +992,6 @@ fileInput.onchange = async (e) => {
       startingAmount,
       currentAmount,
       interestRate,
-      monthlyPayment,
       targetPayoffDate: tpd
     }));
 
@@ -1113,7 +1023,7 @@ const targetDateInput = document.getElementById('targetPayoffDate');
 document.addEventListener('DOMContentLoaded', () => {
   const saved = JSON.parse(localStorage.getItem('debtTracker'));
   if (saved) {
-    ({ startingAmount, currentAmount, interestRate, monthlyPayment, targetPayoffDate } = saved);
+    ({ startingAmount, currentAmount, interestRate, targetPayoffDate } = saved);
 
     setup.style.display = 'none';
     tracker.style.display = 'block';
@@ -1138,8 +1048,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-
-
 function updateAdditionalPaymentText() {
   const additionalText = document.getElementById('additionalPaymentText');
 
@@ -1148,12 +1056,11 @@ function updateAdditionalPaymentText() {
     return;
   }
 
-const dateValue = targetDateInput.value;
+  const dateValue = targetDateInput.value;
   if (!dateValue) {
     additionalText.textContent = '';
     return;
   }
-
 
   const [year, month, day] = dateValue.split('-').map(Number);
   const targetDate = new Date(year, month - 1, day);
@@ -1163,117 +1070,96 @@ const dateValue = targetDateInput.value;
     return;
   }
 
-  const now = new Date();
-  let months =
-    (targetDate.getFullYear() - now.getFullYear()) * 12 +
-    (targetDate.getMonth() - now.getMonth());
-
-  if (months <= 0) {
+  const startDate = new Date();
+  if (targetDate <= startDate) {
     additionalText.textContent = 'Target date must be in the future';
     return;
   }
 
-  const monthlyInterestRate = interestRate / 100;
-  const balance = currentAmount;
+  const dailyRate = (interestRate / 100) / 365;
 
+  // Count full months
+  let months =
+    (targetDate.getFullYear() - startDate.getFullYear()) * 12 +
+    (targetDate.getMonth() - startDate.getMonth());
 
-  const totalInterest = (balance * monthlyInterestRate * months) / 12;
-  const remainingPayment = balance + totalInterest;
-  const additionalPerMonth = remainingPayment / months - monthlyPayment;
+  if (months <= 0) {
+    additionalText.textContent = '';
+    return;
+  }
 
+  // Simulate payoff for a given monthly payment
+  function simulate(payment) {
+    let balance = currentAmount;
+    let simDate = new Date(startDate);
+
+    for (let i = 0; i < months; i++) {
+      const daysInMonth = new Date(
+        simDate.getFullYear(),
+        simDate.getMonth() + 1,
+        0
+      ).getDate();
+
+      // Daily accrual, applied monthly
+      const interest = balance * dailyRate * daysInMonth;
+      balance += interest;
+      balance -= payment;
+
+      if (balance <= 0) return balance;
+
+      simDate.setMonth(simDate.getMonth() + 1);
+    }
+
+    return balance;
+  }
+
+  // Binary search for required payment
+  let low = 0;
+  let high = currentAmount * 2; // safe upper bound
+  let mid;
+
+  for (let i = 0; i < 40; i++) {
+    mid = (low + high) / 2;
+    const result = simulate(mid);
+
+    if (result > 0) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+
+  const requiredPerMonth = Math.round(mid * 100) / 100;
   const formattedDate = targetDate.toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   });
-
-if (additionalPerMonth <= 0) {
   additionalText.textContent =
-    `Current monthly payment is enough to meet target date (${formattedDate}).`;
-} else {
-  additionalText.textContent =
-    `You will need to pay an additional ${moneyFormatter.format(additionalPerMonth)} per month to finish by ${formattedDate}.`;
+    `You need to pay about ${moneyFormatter.format(requiredPerMonth)} per month to finish by ${formattedDate}.`;
 }
-
-}
-
 
 
 const ftr = document.getElementById('ftr');
 const currentYear = new Date().getFullYear();
-ftr.innerHTML = `ver 0.09 AP &copy; ${currentYear}`;
-	
+ftr.innerHTML = `ver 0.10 AP &copy; ${currentYear}`;
 // --- REFRESH ON RESUME LOGIC ---
-
 function refreshOnResume() {
   applyMonthlyLogic();
-  updateNextPaymentText();
   updateAdditionalPaymentText();
   updateProgress();
 }
-
 // When tab/app becomes visible again
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
     refreshOnResume();
   }
 });
-
 // iOS Safari / PWA restore from cache
 window.addEventListener("pageshow", (e) => {
   if (e.persisted) {
     refreshOnResume();
   }
-});
-
-// --- PULL TO REFRESH ---
-const spinner = document.getElementById('pullSpinner');
-const pullThresholdToRefresh = 10;  // px to trigger spinner & refresh
-
-let startY = 0;
-let isPulling = false;
-let pullDistance = 0;
-let spinnerVisible = false;
-
-document.addEventListener('touchstart', (e) => {
-  if (window.scrollY === 0) {
-    startY = e.touches[0].clientY;
-    isPulling = true;
-    pullDistance = 0;
-  }
-});
-
-document.addEventListener('touchmove', (e) => {
-  if (!isPulling) return;
-
-  const currentY = e.touches[0].clientY;
-  pullDistance = currentY - startY;
-
-  if (pullDistance >= pullThresholdToRefresh && !spinnerVisible) {
-    // Show spinner
-    spinnerVisible = true;
-    spinner.classList.add('active');  
-    spinner.style.opacity = '';        
-sss
-    // Refresh data
-    refreshOnResume();
-  }
-});
-
-document.addEventListener('touchend', () => {
-  if (spinnerVisible) {
-    // Fade out spinner
-    spinner.style.opacity = 0;
-    setTimeout(() => {
-      spinner.classList.remove('active'); 
-      spinner.style.opacity = '';          
-    }, 200);
-  }
-
-  // Reset for next pull
-  isPulling = false;
-  pullDistance = 0;
-  spinnerVisible = false;
 });
 </script>
 </body>
