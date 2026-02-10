@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BUDGG 2.0</title>
-
 <meta name="theme-color" content="#0f0f0f">
 <link rel="apple-touch-icon" href="icon_new.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -23,6 +22,7 @@
 }
 
 *{box-sizing:border-box}
+
 body{
   margin:0;
   font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -43,72 +43,112 @@ header{
   padding:0 1rem 2rem;
 }
 
+/* ================= ROWS ================= */
+
 .expense-row{
   position:relative;
   display:grid;
-  grid-template-columns:1fr 120px;
-  gap:.6rem;
-  padding:.75rem;
+  grid-template-columns:1fr 90px;
+  gap:.5rem;
+  padding:.1rem;
   background:var(--row);
   border-bottom:1px solid var(--border);
   touch-action:pan-y;
+  border-radius:6px;
+  overflow:hidden;
+  margin-bottom:3px;
 }
 
 input{
   background:var(--panel);
   border:1px solid var(--border);
   color:var(--text);
-  padding:.6rem;
-  font-size:1.05rem;
-  border-radius:8px;
+  padding:.4rem .5rem;
+  font-size:0.95rem;
+  border-radius:6px;
 }
 
-input:focus{outline:none;border-color:var(--accent)}
+input:focus{
+  outline:none;
+  border-color:var(--accent);
+}
+
 .amount{text-align:right}
 
 button{
+ 
   width:100%;
-  margin-top:1rem;
-  padding:.9rem;
-  font-size:1.05rem;
+  margin-top:0.2rem;
+  padding:.7rem;
+  font-size:0.95rem;
   background:var(--accent);
-  border:none;
-  border-radius:10px;
+  border-top:1px solid rgba(255,255,255,0.5);
+  border-left:1px solid rgba(0,0,0,0.4);
+  border-right:1px solid rgba(0,0,0,0.4);
+  border-bottom:1px solid rgba(0,0,0,0.4);
+  border-radius:8px;
   color:#000;
 }
 
 .totals{
   margin-top:1rem;
-  padding:1rem;
+  padding:.7rem;
   background:var(--panel);
-  border-radius:12px;
+  border-radius:10px;
+  border-top:1px solid rgba(255,255,255,0.3);
 }
 
 .total-line{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:.4rem 0;
+  padding:.3rem 0;
 }
 
 .total-line input{
-  width:140px;
+  width:160px;
   text-align:right;
+}
+
+.totals .total-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.totals .total-line strong,
+.totals .total-line input {
+  width: 160px;    
+  text-align: right;  
+  font-size: 1rem;
+  padding: 0.2rem 0.4rem;
+  border: none;      
+  background: transparent;
+  color: var(--text);
+  box-sizing: border-box;
+}
+/* Net Pay Input */
+.totals .total-line input {
+  background: rgba(255,255,255,0.1); 
+  border: none;                       
+  color: var(--text);
+  border-radius: 6px;                
 }
 
 .tabs{
   display:flex;
   gap:.5rem;
-  margin-top:1.2rem;
+  margin-top:1rem;
   overflow-x:auto;
 }
 
 .tab{
-  padding:.55rem .9rem;
+  padding:.45rem .7rem;
   background:var(--panel);
   border-radius:999px;
   white-space:nowrap;
   cursor:pointer;
+  font-size:0.95rem;
 }
 
 .tab.active{
@@ -125,7 +165,7 @@ button{
   right:0;
   background:var(--panel);
   border-top:1px solid var(--border);
-  padding:1.2rem;
+  padding:1rem;
   transition:bottom .25s ease;
   z-index:10;
 }
@@ -134,12 +174,12 @@ button{
 
 .confirm p{
   text-align:center;
-  margin-bottom:1rem;
+  margin-bottom:.8rem;
 }
 
 .confirm-buttons{
   display:flex;
-  gap:.6rem;
+  gap:.5rem;
 }
 
 .confirm-buttons button{
@@ -151,11 +191,7 @@ button{
   color:#000;
 }
 
-/* iOS-style swipe delete */
-.expense-row {
-  overflow: hidden;
-}
-
+/* Swipe-delete overlay */
 .row-delete-bg {
   position: absolute;
   inset: 0;
@@ -163,86 +199,88 @@ button{
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding-right: 1.2rem;
+  padding-right: 1rem;
   font-weight: 700;
   color: #fff; 
-  font-size: 1.4rem; 
+  font-size: 1.2rem; 
   pointer-events: none; 
+  border-radius:6px;
 }
 
 .row-content {
+   display: flex;        
+  align-items: center;   
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 120px;
-  gap: .6rem;
-  background: var(--row);
-  padding: .75rem;
+  grid-template-columns:1fr 100px;
+  gap:.5rem;
+  background:var(--row);
+  padding:.3rem;
   transition: transform .2s ease;
   touch-action: pan-y;
+  border-radius:5px;
 }
 
+
+.row-content input {
+  flex: 1;            
+}
+
+.row-content input.amount {
+  flex: 0 0 auto;        
+  margin-left: auto;      
+  text-align: right;     
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Small mobile adjustments */
 @media (max-width: 430px) {
   .expense-row {
-    padding: 0.4rem;
-    grid-template-columns: 1fr 90px;
+    grid-template-columns:1fr 90px;
+    padding:.4rem;
   }
 
-  .expense-row input {
-    padding: 0.4rem;
-    font-size: 0.9rem;
+  .expense-row input{
+    padding:.35rem .45rem;
+    font-size:0.9rem;
   }
 
-  button {
-    padding: 0.6rem;
-    font-size: 0.95rem;
+  button{
+    padding:.6rem;
+    font-size:0.9rem;
   }
 
-  .totals {
-    padding: 0.6rem;
+  .totals{
+    padding:.6rem;
   }
 
-  .total-line input {
-    width: 100px;
+  .total-line input{
+    width:100px;
   }
 }
+
+/* iOS / touch devices keep swipe overlay visible */
 @media (hover: none) and (pointer: coarse) {
-  .row-delete-bg {
-    position: absolute;
-    inset: 0;
-    background: var(--danger);
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    padding-right: 1.2rem;
-    font-weight: 700;
-    color: #fff; 
-    font-size: 1.4rem; 
-    pointer-events: none;
+  .row-delete-bg{
+    display:flex;
   }
-
-  .row-content {
-    position: relative;
-    display: grid;
-    grid-template-columns: 1fr 120px;
-    gap: .6rem;
-    background: var(--row);
-    padding: .75rem;
-    transition: transform .2s ease;
-    touch-action: pan-y;
-  }
-
-  .expense-row {
-    position: relative;
-    overflow: hidden;
+  .expense-row, .row-content{
+    border-radius:6px;
   }
 }
 
-/* On desktop, hide it completely */
+/* Desktop: hide the swipe X completely */
 @media (hover: hover) and (pointer: fine) {
-  .row-delete-bg {
-    display: none !important;
+  .row-delete-bg{
+    display:none !important;
   }
 }
+
 </style>
 </head>
 
@@ -260,7 +298,7 @@ button{
     </div>
     <div class="total-line">
       <span>Net Pay</span>
-      <input id="netPay" type="number" step="0.01">
+      <input id="netPay" type="text">
     </div>
     <div class="total-line">
       <span>Remainder</span>
@@ -280,16 +318,19 @@ button{
 </div>
 
 <script>
+    
 const KEY = "budgg2_data";
 let confirmAction = null;
 
 let data = JSON.parse(localStorage.getItem(KEY)) || {
-  sheets: [{ name: "Feb 13", rows: [], netPay: 0 }],
+  sheets: [{ name: "New Tab", rows: [], netPay: 0 }],
   active: 0
 };
 
 const rowsEl = document.getElementById("rows");
 const netPayEl = document.getElementById("netPay");
+
+
 
 function save() {
   localStorage.setItem(KEY, JSON.stringify(data));
@@ -300,15 +341,26 @@ function recalc() {
   let total = 0;
 
   sheet.rows.forEach(r => {
-    const v = parseFloat(r.amount);
-    if (!isNaN(v)) total += v;
+    total += parseFloat(r.amount) || 0;
   });
 
-  document.getElementById("totalBills").textContent = `$${total.toFixed(2)}`;
-  document.getElementById("remainder").textContent =
-    `$${(sheet.netPay - total).toFixed(2)}`;
+  const remainder = sheet.netPay - total;
+
+  document.getElementById("totalBills").textContent = "$" + formatCurrency(total);
+  const remainderEl = document.getElementById("remainder");
+  remainderEl.textContent = "$" + formatCurrency(remainder);
+
+  remainderEl.style.color = remainder < 0 ? 'var(--danger)' : 'var(--accent)';
 }
 
+
+function formatCurrency(val) {
+  return Number(val).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function parseCurrency(val) {
+  return parseFloat(val.replace(/[^0-9.-]+/g, "")) || 0;
+}
 /* ================= ROWS ================= */
 
 function renderRows() {
@@ -319,12 +371,11 @@ function renderRows() {
     const row = document.createElement("div");
     row.className = "expense-row";
 
-    // Red X background
     const bg = document.createElement("div");
     bg.className = "row-delete-bg";
     bg.textContent = "✕";
 
-    // Content
+
     const content = document.createElement("div");
     content.className = "row-content";
 
@@ -366,13 +417,34 @@ function renderRows() {
       });
     };
 
-    content.innerHTML = `
-      <input placeholder="Expense name" value="${r.name}"
-        oninput="data.sheets[data.active].rows[${i}].name=this.value;save()">
-      <input class="amount" type="number" step="0.01" placeholder="0.00"
-        value="${r.amount}"
-        oninput="data.sheets[data.active].rows[${i}].amount=this.value;save();recalc()">
-    `;
+content.innerHTML = `
+  <input
+    placeholder="Expense name"
+    value="${r.name}"
+    oninput="data.sheets[data.active].rows[${i}].name=this.value; save()"
+  >
+  <input
+    class="amount"
+    type="text"
+    placeholder="0.00"
+    value="${r.amount ? '$' + formatCurrency(r.amount) : ''}"
+    onfocus="{
+      if(this.value.startsWith('$')) this.value=parseCurrency(this.value) || '';
+    }"
+    onblur="{
+      let val = parseCurrency(this.value);
+      this.value = '$' + formatCurrency(val);
+      data.sheets[data.active].rows[${i}].amount = val;
+      save();
+      recalc();
+    }"
+    oninput="{
+      data.sheets[data.active].rows[${i}].amount = parseCurrency(this.value);
+      save();
+      recalc();
+    }"
+  >
+`;
 
     row.appendChild(bg);
     row.appendChild(content);
@@ -415,7 +487,6 @@ function renderTabs() {
     };
     tab.ontouchend = () => clearTimeout(timer);
 
-    // Right click delete (desktop)
     tab.oncontextmenu = e => {
       e.preventDefault();
       if (i === data.active && data.sheets.length > 1) {
@@ -428,7 +499,6 @@ function renderTabs() {
       }
     };
 
-    // Click behavior
     tab.onclick = () => {
       if (i === data.active) {
         const name = prompt("Rename tab", s.name);
@@ -447,12 +517,11 @@ function renderTabs() {
     tabsEl.appendChild(tab);
   });
 
-  // Add tab
   const add = document.createElement("div");
   add.className = "tab add";
   add.textContent = "+";
   add.onclick = () => {
-    data.sheets.push({ name: "New Sheet", rows: [], netPay: 0 });
+    data.sheets.push({ name: "New Tab", rows: [], netPay: 0 });
     data.active = data.sheets.length - 1;
     save();
     render();
@@ -479,19 +548,30 @@ function doConfirm() {
 }
 
 /* ================= INIT ================= */
+netPayEl.onfocus = e => {
+  e.target.value = data.sheets[data.active].netPay || "";
+};
+
+netPayEl.onblur = e => {
+  const val = parseCurrency(e.target.value);
+  data.sheets[data.active].netPay = val;
+  e.target.value = "$" + formatCurrency(val);
+  save();
+  recalc();
+};
 
 netPayEl.oninput = e => {
-  data.sheets[data.active].netPay = parseFloat(e.target.value) || 0;
+  data.sheets[data.active].netPay = parseCurrency(e.target.value);
   save();
   recalc();
 };
 
 function render() {
-  netPayEl.value = data.sheets[data.active].netPay;
+  const net = data.sheets[data.active].netPay || 0;
+  netPayEl.value = "$" + formatCurrency(net);
   renderRows();
   renderTabs();
 }
-
 render();
 </script>
 </body>
