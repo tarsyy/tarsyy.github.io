@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BUDGG</title>
+
+<meta name="theme-color" content="#0f0f0f">
+
+<style>
+:root{
+  --bg:#0f0f0f;
+  --panel:#1b1b1b;
+  --row:#1f1f1f;
+  --border:#2a2a2a;
+  --text:#fff;
+  --muted:#9a9a9a;
+  --accent:#4caf50;
+  --danger:#ff5252;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+header{
+  text-align:center;
+  padding:1rem;
+  font-size:1.6rem;
+  font-weight:600;
+}
+
+.container{
+  max-width:700px;
+  margin:auto;
+  padding:0 1rem 2rem;
+}
+
+.expense-row{
+  position:relative;
+  display:grid;
+  grid-template-columns:1fr 120px;
+  gap:.6rem;
+  padding:.75rem;
+  background:var(--row);
+  border-bottom:1px solid var(--border);
+  touch-action:pan-y;
+}
+
+input{
+  background:var(--panel);
+  border:1px solid var(--border);
+  color:var(--text);
+  padding:.6rem;
+  font-size:1.05rem;
+  border-radius:8px;
+}
+
+input:focus{outline:none;border-color:var(--accent)}
+.amount{text-align:right}
+
+button{
+  width:100%;
+  margin-top:1rem;
+  padding:.9rem;
+  font-size:1.05rem;
+  background:var(--accent);
+  border:none;
+  border-radius:10px;
+  color:#000;
+}
+
+.totals{
+  margin-top:1rem;
+  padding:1rem;
+  background:var(--panel);
+  border-radius:12px;
+}
+
+.total-line{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:.4rem 0;
+}
+
+.total-line input{
+  width:140px;
+  text-align:right;
+}
+
+.tabs{
+  display:flex;
+  gap:.5rem;
+  margin-top:1.2rem;
+  overflow-x:auto;
+}
+
+.tab{
+  padding:.55rem .9rem;
+  background:var(--panel);
+  border-radius:999px;
+  white-space:nowrap;
+  cursor:pointer;
+}
+
+.tab.active{
+  background:var(--accent);
+  color:#000;
+}
+
+.tab.add{font-weight:700}
+
+.confirm{
+  position:fixed;
+  bottom:-220px;
+  left:0;
+  right:0;
+  background:var(--panel);
+  border-top:1px solid var(--border);
+  padding:1.2rem;
+  transition:bottom .25s ease;
+  z-index:10;
+}
+
+.confirm.show{bottom:0}
+
+.confirm p{
+  text-align:center;
+  margin-bottom:1rem;
+}
+
+.confirm-buttons{
+  display:flex;
+  gap:.6rem;
+}
+
+.confirm-buttons button{
+  flex:1;
+}
+
+.confirm .danger{
+  background:var(--danger);
+  color:#000;
+}
+
+/* iOS-style swipe delete */
+.expense-row {
+  overflow: hidden;
+}
+
+.row-delete-bg {
+  position: absolute;
+  inset: 0;
+  background: var(--danger);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-right: 1.2rem;
+  font-weight: 600;
+  color: #000;
+}
+
+.row-content {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  gap: .6rem;
+  background: var(--row);
+  padding: .75rem;
+  transition: transform .2s ease;
+  touch-action: pan-y;
+}
+</style>
+</head>
+
+<body>
+<header>BUDGG 2.0</header>
+
+<div class="container">
+  <div id="rows"></div>
+  <button id="addNewExpense" onclick="addRow()">+ Add New Expense</button>
+
+  <div class="totals">
+    <div class="total-line">
+      <span>Total Bills</span>
+      <strong id="totalBills">$0.00</strong>
+    </div>
+    <div class="total-line">
+      <span>Net Pay</span>
+      <input id="netPay" type="number" step="0.01">
+    </div>
+    <div class="total-line">
+      <span>Remainder</span>
+      <strong id="remainder">$0.00</strong>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+</div>
+
+<div class="confirm" id="confirm">
+  <p id="confirmText"></p>
+  <div class="confirm-buttons">
+    <button onclick="cancelConfirm()">Cancel</button>
+    <button class="danger" onclick="doConfirm()">Delete</button>
+  </div>
+</div>
+
+<script>
+const KEY="budgg2_data";
+let confirmAction=null;
+
+let data=JSON.parse(localStorage.getItem(KEY))||{
+  sheets:[{name:"Feb 13",rows:[],netPay:0}],
+  active:0
+};
+
+const rowsEl=document.getElementById("rows");
+
+function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+
+function recalc(){
+  const sheet=data.sheets[data.active];
+  let total=0;
+  sheet.rows.forEach(r=>{
+    const v=parseFloat(r.amount);
+    if(!isNaN(v)) total+=v;
+  });
+  document.getElementById("totalBills").textContent=`$${total.toFixed(2)}`;
+  document.getElementById("remainder").textContent=`$${(sheet.netPay-total).toFixed(2)}`;
+}
+
+function renderRows(){
+  rowsEl.innerHTML="";
+  const sheet=data.sheets[data.active];
+
+  sheet.rows.forEach((r,i)=>{
+    const row=document.createElement("div");
+    row.className="expense-row";
+
+    const bg=document.createElement("div");
+    bg.className="row-delete-bg";
+    bg.textContent="Delete";
+
+    const content=document.createElement("div");
+    content.className="row-content";
+
+    let startX=0,currentX=0,dragging=false;
+
+    content.ontouchstart=e=>{
+      startX=e.touches[0].clientX;
+      dragging=true;
+    };
+
+    content.ontouchmove=e=>{
+      if(!dragging) return;
+      currentX=e.touches[0].clientX-startX;
+      if(currentX<0){
+        content.style.transform=`translateX(${Math.max(currentX,-120)}px)`;
+      }
+    };
+
+    content.ontouchend=()=>{
+      dragging=false;
+      if(currentX<-80){
+        showConfirm("Delete this row?",()=>{
+          sheet.rows.splice(i,1);
+          save();
+          renderRows();
+        });
+      }
+      content.style.transform="";
+      currentX=0;
+    };
+
+    // Desktop right-click
+    row.oncontextmenu=e=>{
+      e.preventDefault();
+      showConfirm("Delete this row?",()=>{
+        sheet.rows.splice(i,1);
+        save();
+        renderRows();
+      });
+    };
+
+    content.innerHTML=`
+      <input placeholder="Expense name" value="${r.name}"
+        oninput="data.sheets[data.active].rows[${i}].name=this.value;save()">
+      <input class="amount" type="number" step="0.01" placeholder="0.00"
+        value="${r.amount}"
+        oninput="data.sheets[data.active].rows[${i}].amount=this.value;save();recalc()">
+    `;
+
+    row.appendChild(bg);
+    row.appendChild(content);
+    rowsEl.appendChild(row);
+  });
+
+  recalc();
+}
+
+function renderTabs(){
+  const tabs=document.getElementById("tabs");
+  tabs.innerHTML="";
+  data.sheets.forEach((s,i)=>{
+    const t=document.createElement("div");
+    t.className="tab"+(i===data.active?" active":"");
+    t.textContent=s.name;
+
+    let timer;
+    t.ontouchstart=()=>timer=setTimeout(()=>{
+      if(i===data.active && data.sheets.length>1){
+        showConfirm("Delete this tab?",()=>{data.sheets.splice(i,1);data.active=0;save();render();});
+      }
+    },700);
+    t.ontouchend=()=>clearTimeout(timer);
+
+    t.oncontextmenu=e=>{
+      e.preventDefault();
+      if(i===data.active && data.sheets.length>1){
+        showConfirm("Delete this tab?",()=>{data.sheets.splice(i,1);data.active=0;save();render();});
+      }
+    };
+
+    t.onclick=()=>{
+      if(i===data.active){
+        const n=prompt("Rename tab",s.name);
+        if(n){s.name=n;save();renderTabs();}
+      }else{
+        data.active=i;save();render();
+      }
+    };
+
+    tabs.appendChild(t);
+  });
+
+  const add=document.createElement("div");
+  add.className="tab add";
+  add.textContent="+";
+  add.onclick=()=>{
+    data.sheets.push({name:"New Sheet",rows:[],netPay:0});
+    data.active=data.sheets.length-1;
+    save();render();
+  };
+  tabs.appendChild(add);
+}
+
+function render(){
+  document.getElementById("netPay").value=data.sheets[data.active].netPay;
+  renderRows();
+  renderTabs();
+}
+
+function addRow(){
+  data.sheets[data.active].rows.push({name:"",amount:""});
+  save();renderRows();
+}
+
+function showConfirm(text,action){
+  confirmAction=action;
+  document.getElementById("confirmText").textContent=text;
+  document.getElementById("confirm").classList.add("show");
+}
+
+function cancelConfirm(){
+  confirmAction=null;
+  document.getElementById("confirm").classList.remove("show");
+}
+
+function doConfirm(){
+  if(confirmAction) confirmAction();
+  cancelConfirm();
+}
+
+document.getElementById("netPay").oninput=e=>{
+  data.sheets[data.active].netPay=parseFloat(e.target.value)||0;
+  save();recalc();
+};
+
+render();
+</script>
+</body>
+</html>
