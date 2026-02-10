@@ -366,6 +366,8 @@ function parseCurrency(val) {
 }
 /* ================= ROWS ================= */
 
+let swipedRow = null; // keep track of the row currently slid out
+
 function renderRows() {
   rowsEl.innerHTML = "";
   const sheet = data.sheets[data.active];
@@ -374,7 +376,6 @@ function renderRows() {
     const row = document.createElement("div");
     row.className = "expense-row";
 
-    // X behind the row
     const bg = document.createElement("div");
     bg.className = "row-delete-bg";
     bg.textContent = "✕"; 
@@ -415,13 +416,11 @@ function renderRows() {
     row.appendChild(content);
     rowsEl.appendChild(row);
 
-    // Swipe logic
     let startX = 0, currentX = 0, dragging = false;
 
     content.ontouchstart = e => {
       startX = e.touches[0].clientX;
       dragging = true;
-      row.classList.add("swiping");
     };
 
     content.ontouchmove = e => {
@@ -429,24 +428,29 @@ function renderRows() {
       currentX = e.touches[0].clientX - startX;
       if (currentX < 0) { 
         content.style.transform = `translateX(${Math.max(currentX, -120)}px)`;
-      } else if (currentX > 0) { 
-        content.style.transform = `translateX(${currentX}px)`;
       }
     };
 
     content.ontouchend = () => {
       dragging = false;
       if (currentX < -80) {
+        // slide row fully out
+        content.style.transition = "transform 0.2s ease";
+        content.style.transform = "translateX(-120px)";
+        swipedRow = content; // store reference
+
         showConfirm("Delete this row?", () => {
           sheet.rows.splice(i, 1);
           save();
           renderRows();
+          swipedRow = null;
         });
+      } else {
+        // slide back if below threshold
+        content.style.transition = "transform 0.2s ease";
+        content.style.transform = "translateX(0)";
       }
-      content.style.transition = "transform 0.2s ease";
-      content.style.transform = "translateX(0)";
       setTimeout(() => content.style.transition = "", 200);
-      row.classList.remove("swiping");
       currentX = 0;
     };
 
@@ -461,6 +465,18 @@ function renderRows() {
   });
 
   recalc();
+}
+
+// override cancelConfirm to slide back swiped row
+function cancelConfirm() {
+  confirmAction = null;
+  document.getElementById("confirm").classList.remove("show");
+  if (swipedRow) {
+    swipedRow.style.transition = "transform 0.2s ease";
+    swipedRow.style.transform = "translateX(0)";
+    setTimeout(() => swipedRow.style.transition = "", 200);
+    swipedRow = null;
+  }
 }
 function addRow() {
   data.sheets[data.active].rows.push({ name: "", amount: "" });
