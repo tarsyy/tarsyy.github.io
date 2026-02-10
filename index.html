@@ -192,22 +192,23 @@ button{
 }
 
 /* Swipe-delete overlay */
+/* Hide the delete background by default */
 .row-delete-bg {
   position: absolute;
   inset: 0;
-  background: rgba(255, 82, 82, 0.85); 
-  display: none;
+  background: rgba(255, 82, 82, 0.85); /* semi-transparent red */
+  display: none;   /* <- hide by default */
   justify-content: flex-end;
   align-items: center;
   padding-right: 1rem;
   font-weight: 700;
-  color: #fff; 
-  font-size: 1.2rem; 
-  pointer-events: none; 
-  border-radius:6px;
+  color: #fff;
+  font-size: 1.2rem;
+  pointer-events: none;
+  border-radius: 6px;
 }
 
-/* show only while swiping */
+/* Show only while swiping */
 .expense-row.swiping .row-delete-bg {
   display: flex;
 }
@@ -275,16 +276,6 @@ input[type=number]::-webkit-outer-spin-button {
   }
 }
 
-
-/* iOS / touch devices keep swipe overlay visible */
-@media (hover: none) and (pointer: coarse) {
-  .row-delete-bg{
-    display:flex;
-  }
-  .expense-row, .row-content{
-    border-radius:6px;
-  }
-}
 
 /* Desktop: hide the swipe X completely */
 @media (hover: hover) and (pointer: fine) {
