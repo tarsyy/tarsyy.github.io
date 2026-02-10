@@ -3,9 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>BUDGG</title>
+<title>BUDGG 2.0</title>
 
 <meta name="theme-color" content="#0f0f0f">
+<link rel="apple-touch-icon" href="icon_new.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <style>
 :root{
@@ -212,175 +215,217 @@ button{
 </div>
 
 <script>
-const KEY="budgg2_data";
-let confirmAction=null;
+const KEY = "budgg2_data";
+let confirmAction = null;
 
-let data=JSON.parse(localStorage.getItem(KEY))||{
-  sheets:[{name:"Feb 13",rows:[],netPay:0}],
-  active:0
+let data = JSON.parse(localStorage.getItem(KEY)) || {
+  sheets: [{ name: "Feb 13", rows: [], netPay: 0 }],
+  active: 0
 };
 
-const rowsEl=document.getElementById("rows");
+const rowsEl = document.getElementById("rows");
+const netPayEl = document.getElementById("netPay");
 
-function save(){localStorage.setItem(KEY,JSON.stringify(data))}
-
-function recalc(){
-  const sheet=data.sheets[data.active];
-  let total=0;
-  sheet.rows.forEach(r=>{
-    const v=parseFloat(r.amount);
-    if(!isNaN(v)) total+=v;
-  });
-  document.getElementById("totalBills").textContent=`$${total.toFixed(2)}`;
-  document.getElementById("remainder").textContent=`$${(sheet.netPay-total).toFixed(2)}`;
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(data));
 }
 
-function renderRows(){
-  rowsEl.innerHTML="";
-  const sheet=data.sheets[data.active];
+function recalc() {
+  const sheet = data.sheets[data.active];
+  let total = 0;
 
-  sheet.rows.forEach((r,i)=>{
-    const row=document.createElement("div");
-    row.className="expense-row";
+  sheet.rows.forEach(r => {
+    const v = parseFloat(r.amount);
+    if (!isNaN(v)) total += v;
+  });
 
-    const bg=document.createElement("div");
-    bg.className="row-delete-bg";
-    bg.textContent="Delete";
+  document.getElementById("totalBills").textContent = `$${total.toFixed(2)}`;
+  document.getElementById("remainder").textContent =
+    `$${(sheet.netPay - total).toFixed(2)}`;
+}
 
-    const content=document.createElement("div");
-    content.className="row-content";
+/* ================= ROWS ================= */
 
-    let startX=0,currentX=0,dragging=false;
+function renderRows() {
+  rowsEl.innerHTML = "";
+  const sheet = data.sheets[data.active];
 
-    content.ontouchstart=e=>{
-      startX=e.touches[0].clientX;
-      dragging=true;
+  sheet.rows.forEach((r, i) => {
+    const row = document.createElement("div");
+    row.className = "expense-row";
+
+    let startX = 0;
+    let currentX = 0;
+    let swiping = false;
+
+    // iOS swipe to delete (invisible)
+    row.ontouchstart = e => {
+      startX = e.touches[0].clientX;
+      swiping = true;
     };
 
-    content.ontouchmove=e=>{
-      if(!dragging) return;
-      currentX=e.touches[0].clientX-startX;
-      if(currentX<0){
-        content.style.transform=`translateX(${Math.max(currentX,-120)}px)`;
+    row.ontouchmove = e => {
+      if (!swiping) return;
+      currentX = e.touches[0].clientX - startX;
+      if (currentX < 0) {
+        row.style.transform = `translateX(${Math.max(currentX, -90)}px)`;
       }
     };
 
-    content.ontouchend=()=>{
-      dragging=false;
-      if(currentX<-80){
-        showConfirm("Delete this row?",()=>{
-          sheet.rows.splice(i,1);
+    row.ontouchend = () => {
+      swiping = false;
+      if (currentX < -70) {
+        showConfirm("Delete this row?", () => {
+          sheet.rows.splice(i, 1);
           save();
           renderRows();
         });
       }
-      content.style.transform="";
-      currentX=0;
+      row.style.transform = "";
+      currentX = 0;
     };
 
-    // Desktop right-click
-    row.oncontextmenu=e=>{
+    // Desktop right-click delete
+    row.oncontextmenu = e => {
       e.preventDefault();
-      showConfirm("Delete this row?",()=>{
-        sheet.rows.splice(i,1);
+      showConfirm("Delete this row?", () => {
+        sheet.rows.splice(i, 1);
         save();
         renderRows();
       });
     };
 
-    content.innerHTML=`
-      <input placeholder="Expense name" value="${r.name}"
-        oninput="data.sheets[data.active].rows[${i}].name=this.value;save()">
-      <input class="amount" type="number" step="0.01" placeholder="0.00"
+    row.innerHTML = `
+      <input
+        placeholder="Expense name"
+        value="${r.name}"
+        oninput="data.sheets[data.active].rows[${i}].name=this.value; save()"
+      >
+      <input
+        class="amount"
+        type="number"
+        step="0.01"
+        placeholder="0.00"
         value="${r.amount}"
-        oninput="data.sheets[data.active].rows[${i}].amount=this.value;save();recalc()">
+        oninput="data.sheets[data.active].rows[${i}].amount=this.value; save(); recalc()"
+      >
     `;
 
-    row.appendChild(bg);
-    row.appendChild(content);
     rowsEl.appendChild(row);
   });
 
   recalc();
 }
 
-function renderTabs(){
-  const tabs=document.getElementById("tabs");
-  tabs.innerHTML="";
-  data.sheets.forEach((s,i)=>{
-    const t=document.createElement("div");
-    t.className="tab"+(i===data.active?" active":"");
-    t.textContent=s.name;
+function addRow() {
+  data.sheets[data.active].rows.push({ name: "", amount: "" });
+  save();
+  renderRows();
+}
 
+/* ================= TABS ================= */
+
+function renderTabs() {
+  const tabsEl = document.getElementById("tabs");
+  tabsEl.innerHTML = "";
+
+  data.sheets.forEach((s, i) => {
+    const tab = document.createElement("div");
+    tab.className = "tab" + (i === data.active ? " active" : "");
+    tab.textContent = s.name;
+
+    // Long press delete (iOS)
     let timer;
-    t.ontouchstart=()=>timer=setTimeout(()=>{
-      if(i===data.active && data.sheets.length>1){
-        showConfirm("Delete this tab?",()=>{data.sheets.splice(i,1);data.active=0;save();render();});
-      }
-    },700);
-    t.ontouchend=()=>clearTimeout(timer);
+    tab.ontouchstart = () => {
+      timer = setTimeout(() => {
+        if (i === data.active && data.sheets.length > 1) {
+          showConfirm("Delete this tab?", () => {
+            data.sheets.splice(i, 1);
+            data.active = 0;
+            save();
+            render();
+          });
+        }
+      }, 700);
+    };
+    tab.ontouchend = () => clearTimeout(timer);
 
-    t.oncontextmenu=e=>{
+    // Right click delete (desktop)
+    tab.oncontextmenu = e => {
       e.preventDefault();
-      if(i===data.active && data.sheets.length>1){
-        showConfirm("Delete this tab?",()=>{data.sheets.splice(i,1);data.active=0;save();render();});
+      if (i === data.active && data.sheets.length > 1) {
+        showConfirm("Delete this tab?", () => {
+          data.sheets.splice(i, 1);
+          data.active = 0;
+          save();
+          render();
+        });
       }
     };
 
-    t.onclick=()=>{
-      if(i===data.active){
-        const n=prompt("Rename tab",s.name);
-        if(n){s.name=n;save();renderTabs();}
-      }else{
-        data.active=i;save();render();
+    // Click behavior
+    tab.onclick = () => {
+      if (i === data.active) {
+        const name = prompt("Rename tab", s.name);
+        if (name) {
+          s.name = name;
+          save();
+          renderTabs();
+        }
+      } else {
+        data.active = i;
+        save();
+        render();
       }
     };
 
-    tabs.appendChild(t);
+    tabsEl.appendChild(tab);
   });
 
-  const add=document.createElement("div");
-  add.className="tab add";
-  add.textContent="+";
-  add.onclick=()=>{
-    data.sheets.push({name:"New Sheet",rows:[],netPay:0});
-    data.active=data.sheets.length-1;
-    save();render();
+  // Add tab
+  const add = document.createElement("div");
+  add.className = "tab add";
+  add.textContent = "+";
+  add.onclick = () => {
+    data.sheets.push({ name: "New Sheet", rows: [], netPay: 0 });
+    data.active = data.sheets.length - 1;
+    save();
+    render();
   };
-  tabs.appendChild(add);
+  tabsEl.appendChild(add);
 }
 
-function render(){
-  document.getElementById("netPay").value=data.sheets[data.active].netPay;
-  renderRows();
-  renderTabs();
-}
+/* ================= CONFIRM ================= */
 
-function addRow(){
-  data.sheets[data.active].rows.push({name:"",amount:""});
-  save();renderRows();
-}
-
-function showConfirm(text,action){
-  confirmAction=action;
-  document.getElementById("confirmText").textContent=text;
+function showConfirm(text, action) {
+  confirmAction = action;
+  document.getElementById("confirmText").textContent = text;
   document.getElementById("confirm").classList.add("show");
 }
 
-function cancelConfirm(){
-  confirmAction=null;
+function cancelConfirm() {
+  confirmAction = null;
   document.getElementById("confirm").classList.remove("show");
 }
 
-function doConfirm(){
-  if(confirmAction) confirmAction();
+function doConfirm() {
+  if (confirmAction) confirmAction();
   cancelConfirm();
 }
 
-document.getElementById("netPay").oninput=e=>{
-  data.sheets[data.active].netPay=parseFloat(e.target.value)||0;
-  save();recalc();
+/* ================= INIT ================= */
+
+netPayEl.oninput = e => {
+  data.sheets[data.active].netPay = parseFloat(e.target.value) || 0;
+  save();
+  recalc();
 };
+
+function render() {
+  netPayEl.value = data.sheets[data.active].netPay;
+  renderRows();
+  renderTabs();
+}
 
 render();
 </script>
