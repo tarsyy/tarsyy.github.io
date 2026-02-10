@@ -374,37 +374,82 @@ function renderRows() {
     const row = document.createElement("div");
     row.className = "expense-row";
 
+    // X behind the row
     const bg = document.createElement("div");
     bg.className = "row-delete-bg";
-    bg.textContent = "✕";
-
+    bg.textContent = "✕"; 
+    row.appendChild(bg);
 
     const content = document.createElement("div");
     content.className = "row-content";
 
+    content.innerHTML = `
+      <input
+        placeholder="Expense name"
+        value="${r.name}"
+        oninput="data.sheets[data.active].rows[${i}].name=this.value; save()"
+      >
+      <input
+        class="amount"
+        type="text"
+        placeholder="0.00"
+        value="${r.amount ? '$' + parseFloat(r.amount).toFixed(2) : ''}"
+        onfocus="{
+          if(this.value.startsWith('$')) this.value = this.value.replace('$','');
+        }"
+        onblur="{
+          let val = parseFloat(this.value) || 0;
+          this.value = '$' + val.toFixed(2);
+          data.sheets[data.active].rows[${i}].amount = val;
+          save();
+          recalc();
+        }"
+        oninput="{
+          let val = parseFloat(this.value) || 0;
+          data.sheets[data.active].rows[${i}].amount = val;
+          save();
+          recalc();
+        }"
+      >
+    `;
+    row.appendChild(content);
+    rowsEl.appendChild(row);
+
+    // Swipe logic
     let startX = 0, currentX = 0, dragging = false;
 
-content.ontouchstart = e => {
-  startX = e.touches[0].clientX;
-  dragging = true;
-  row.classList.add('swiping'); // show red X while swiping
-};
+    content.ontouchstart = e => {
+      startX = e.touches[0].clientX;
+      dragging = true;
+      row.classList.add("swiping");
+    };
 
-content.ontouchend = () => {
-  dragging = false;
-  if (currentX < -80) {
-    showConfirm("Delete this row?", () => {
-      sheet.rows.splice(i, 1);
-      save();
-      renderRows();
-    });
-  }
-  content.style.transform = "";
-  currentX = 0;
-  row.classList.remove('swiping'); // hide red X after swipe
-};
+    content.ontouchmove = e => {
+      if (!dragging) return;
+      currentX = e.touches[0].clientX - startX;
+      if (currentX < 0) { 
+        content.style.transform = `translateX(${Math.max(currentX, -120)}px)`;
+      } else if (currentX > 0) { 
+        content.style.transform = `translateX(${currentX}px)`;
+      }
+    };
 
-    // Desktop right-click
+    content.ontouchend = () => {
+      dragging = false;
+      if (currentX < -80) {
+        showConfirm("Delete this row?", () => {
+          sheet.rows.splice(i, 1);
+          save();
+          renderRows();
+        });
+      }
+      content.style.transition = "transform 0.2s ease";
+      content.style.transform = "translateX(0)";
+      setTimeout(() => content.style.transition = "", 200);
+      row.classList.remove("swiping");
+      currentX = 0;
+    };
+
     row.oncontextmenu = e => {
       e.preventDefault();
       showConfirm("Delete this row?", () => {
@@ -413,44 +458,10 @@ content.ontouchend = () => {
         renderRows();
       });
     };
-
-content.innerHTML = `
-  <input
-    placeholder="Expense name"
-    value="${r.name}"
-    oninput="data.sheets[data.active].rows[${i}].name=this.value; save()"
-  >
-  <input
-    class="amount"
-    type="text"
-    placeholder="0.00"
-    value="${r.amount ? '$' + formatCurrency(r.amount) : ''}"
-    onfocus="{
-      if(this.value.startsWith('$')) this.value=parseCurrency(this.value) || '';
-    }"
-    onblur="{
-      let val = parseCurrency(this.value);
-      this.value = '$' + formatCurrency(val);
-      data.sheets[data.active].rows[${i}].amount = val;
-      save();
-      recalc();
-    }"
-    oninput="{
-      data.sheets[data.active].rows[${i}].amount = parseCurrency(this.value);
-      save();
-      recalc();
-    }"
-  >
-`;
-
-    row.appendChild(bg);
-    row.appendChild(content);
-    rowsEl.appendChild(row);
   });
 
   recalc();
 }
-
 function addRow() {
   data.sheets[data.active].rows.push({ name: "", amount: "" });
   save();
