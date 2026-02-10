@@ -195,8 +195,8 @@ button{
 .row-delete-bg {
   position: absolute;
   inset: 0;
-  background: var(--danger);
-  display: flex;
+  background: rgba(255, 82, 82, 0.85); 
+  display: none;
   justify-content: flex-end;
   align-items: center;
   padding-right: 1rem;
@@ -207,29 +207,32 @@ button{
   border-radius:6px;
 }
 
-.row-content {
-   display: flex;        
-  align-items: center;   
-  position: relative;
-  display: grid;
-  grid-template-columns:1fr 100px;
-  gap:.5rem;
-  background:var(--row);
-  padding:.3rem;
-  transition: transform .2s ease;
-  touch-action: pan-y;
-  border-radius:5px;
+/* show only while swiping */
+.expense-row.swiping .row-delete-bg {
+  display: flex;
 }
 
+.row-content {
+  display: grid;                  /* grid only */
+  grid-template-columns: 1fr auto; /* name grows, amount shrinks */
+  gap: .5rem;
+  background: var(--row);
+  padding: .3rem;
+  transition: transform .2s ease;
+  touch-action: pan-y;
+  border-radius: 6px;
+  min-width: 0;                   /* important for Safari flex/grid combo */
+}
 
 .row-content input {
-  flex: 1;            
+  width: 100%;                     /* fill grid column */
+  min-width: 0;                    /* allow shrinking in Safari */
+  box-sizing: border-box;
 }
 
 .row-content input.amount {
-  flex: 0 0 auto;        
-  margin-left: auto;      
-  text-align: right;     
+  width: 100px;                    /* fixed width for amount input */
+  text-align: right;
 }
 
 input[type=number]::-webkit-inner-spin-button,
@@ -262,7 +265,16 @@ input[type=number]::-webkit-outer-spin-button {
   .total-line input{
     width:100px;
   }
+    .row-content input.amount {
+    width: 80px; 
+  }
+
+  .row-content input {
+    font-size: 0.9rem;
+    padding: .35rem .45rem;
+  }
 }
+
 
 /* iOS / touch devices keep swipe overlay visible */
 @media (hover: none) and (pointer: coarse) {
@@ -381,31 +393,25 @@ function renderRows() {
 
     let startX = 0, currentX = 0, dragging = false;
 
-    content.ontouchstart = e => {
-      startX = e.touches[0].clientX;
-      dragging = true;
-    };
+content.ontouchstart = e => {
+  startX = e.touches[0].clientX;
+  dragging = true;
+  row.classList.add('swiping'); // show red X while swiping
+};
 
-    content.ontouchmove = e => {
-      if (!dragging) return;
-      currentX = e.touches[0].clientX - startX;
-      if (currentX < 0) {
-        content.style.transform = `translateX(${Math.max(currentX, -120)}px)`;
-      }
-    };
-
-    content.ontouchend = () => {
-      dragging = false;
-      if (currentX < -80) {
-        showConfirm("Delete this row?", () => {
-          sheet.rows.splice(i, 1);
-          save();
-          renderRows();
-        });
-      }
-      content.style.transform = "";
-      currentX = 0;
-    };
+content.ontouchend = () => {
+  dragging = false;
+  if (currentX < -80) {
+    showConfirm("Delete this row?", () => {
+      sheet.rows.splice(i, 1);
+      save();
+      renderRows();
+    });
+  }
+  content.style.transform = "";
+  currentX = 0;
+  row.classList.remove('swiping'); // hide red X after swipe
+};
 
     // Desktop right-click
     row.oncontextmenu = e => {
