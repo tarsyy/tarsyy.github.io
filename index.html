@@ -164,8 +164,10 @@ button{
   justify-content: flex-end;
   align-items: center;
   padding-right: 1.2rem;
-  font-weight: 600;
-  color: #000;
+  font-weight: 700;
+  color: #fff; 
+  font-size: 1.4rem; 
+  pointer-events: none; 
 }
 
 .row-content {
@@ -177,6 +179,69 @@ button{
   padding: .75rem;
   transition: transform .2s ease;
   touch-action: pan-y;
+}
+
+@media (max-width: 430px) {
+  .expense-row {
+    padding: 0.4rem;
+    grid-template-columns: 1fr 90px;
+  }
+
+  .expense-row input {
+    padding: 0.4rem;
+    font-size: 0.9rem;
+  }
+
+  button {
+    padding: 0.6rem;
+    font-size: 0.95rem;
+  }
+
+  .totals {
+    padding: 0.6rem;
+  }
+
+  .total-line input {
+    width: 100px;
+  }
+}
+@media (hover: none) and (pointer: coarse) {
+  .row-delete-bg {
+    position: absolute;
+    inset: 0;
+    background: var(--danger);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding-right: 1.2rem;
+    font-weight: 700;
+    color: #fff; 
+    font-size: 1.4rem; 
+    pointer-events: none;
+  }
+
+  .row-content {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 120px;
+    gap: .6rem;
+    background: var(--row);
+    padding: .75rem;
+    transition: transform .2s ease;
+    touch-action: pan-y;
+  }
+
+  .expense-row {
+    position: relative;
+    overflow: hidden;
+  }
+}
+
+/* On desktop, hide it completely */
+@media (hover: hover) and (pointer: fine) {
+  .row-delete-bg {
+    display: none !important;
+  }
 }
 </style>
 </head>
@@ -254,38 +319,44 @@ function renderRows() {
     const row = document.createElement("div");
     row.className = "expense-row";
 
-    let startX = 0;
-    let currentX = 0;
-    let swiping = false;
+    // Red X background
+    const bg = document.createElement("div");
+    bg.className = "row-delete-bg";
+    bg.textContent = "✕";
 
-    // iOS swipe to delete (invisible)
-    row.ontouchstart = e => {
+    // Content
+    const content = document.createElement("div");
+    content.className = "row-content";
+
+    let startX = 0, currentX = 0, dragging = false;
+
+    content.ontouchstart = e => {
       startX = e.touches[0].clientX;
-      swiping = true;
+      dragging = true;
     };
 
-    row.ontouchmove = e => {
-      if (!swiping) return;
+    content.ontouchmove = e => {
+      if (!dragging) return;
       currentX = e.touches[0].clientX - startX;
       if (currentX < 0) {
-        row.style.transform = `translateX(${Math.max(currentX, -90)}px)`;
+        content.style.transform = `translateX(${Math.max(currentX, -120)}px)`;
       }
     };
 
-    row.ontouchend = () => {
-      swiping = false;
-      if (currentX < -70) {
+    content.ontouchend = () => {
+      dragging = false;
+      if (currentX < -80) {
         showConfirm("Delete this row?", () => {
           sheet.rows.splice(i, 1);
           save();
           renderRows();
         });
       }
-      row.style.transform = "";
+      content.style.transform = "";
       currentX = 0;
     };
 
-    // Desktop right-click delete
+    // Desktop right-click
     row.oncontextmenu = e => {
       e.preventDefault();
       showConfirm("Delete this row?", () => {
@@ -295,22 +366,16 @@ function renderRows() {
       });
     };
 
-    row.innerHTML = `
-      <input
-        placeholder="Expense name"
-        value="${r.name}"
-        oninput="data.sheets[data.active].rows[${i}].name=this.value; save()"
-      >
-      <input
-        class="amount"
-        type="number"
-        step="0.01"
-        placeholder="0.00"
+    content.innerHTML = `
+      <input placeholder="Expense name" value="${r.name}"
+        oninput="data.sheets[data.active].rows[${i}].name=this.value;save()">
+      <input class="amount" type="number" step="0.01" placeholder="0.00"
         value="${r.amount}"
-        oninput="data.sheets[data.active].rows[${i}].amount=this.value; save(); recalc()"
-      >
+        oninput="data.sheets[data.active].rows[${i}].amount=this.value;save();recalc()">
     `;
 
+    row.appendChild(bg);
+    row.appendChild(content);
     rowsEl.appendChild(row);
   });
 
