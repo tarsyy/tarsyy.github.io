@@ -321,19 +321,17 @@ input[type=number]::-webkit-outer-spin-button {
 </div>
 
 <script>
-    
 const KEY = "budgg2_data";
 let confirmAction = null;
+let swipedRow = null;
 
 let data = JSON.parse(localStorage.getItem(KEY)) || {
-  sheets: [{ name: "New Tab", rows: [], netPay: 0 }],
+  sheets: [{ name: "Feb 13", rows: [], netPay: 0 }],
   active: 0
 };
 
 const rowsEl = document.getElementById("rows");
 const netPayEl = document.getElementById("netPay");
-
-
 
 function save() {
   localStorage.setItem(KEY, JSON.stringify(data));
@@ -344,29 +342,16 @@ function recalc() {
   let total = 0;
 
   sheet.rows.forEach(r => {
-    total += parseFloat(r.amount) || 0;
+    const v = parseFloat(r.amount);
+    if (!isNaN(v)) total += v;
   });
 
-  const remainder = sheet.netPay - total;
-
-  document.getElementById("totalBills").textContent = "$" + formatCurrency(total);
-  const remainderEl = document.getElementById("remainder");
-  remainderEl.textContent = "$" + formatCurrency(remainder);
-
-  remainderEl.style.color = remainder < 0 ? 'var(--danger)' : 'var(--accent)';
+  document.getElementById("totalBills").textContent = `$${total.toFixed(2)}`;
+  document.getElementById("remainder").textContent =
+    `$${(sheet.netPay - total).toFixed(2)}`;
 }
 
-
-function formatCurrency(val) {
-  return Number(val).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function parseCurrency(val) {
-  return parseFloat(val.replace(/[^0-9.-]+/g, "")) || 0;
-}
 /* ================= ROWS ================= */
-
-let swipedRow = null; // keep track of the row currently slid out
 
 function renderRows() {
   rowsEl.innerHTML = "";
@@ -376,84 +361,60 @@ function renderRows() {
     const row = document.createElement("div");
     row.className = "expense-row";
 
+    // Delete background
     const bg = document.createElement("div");
     bg.className = "row-delete-bg";
-    bg.textContent = "✕"; 
+    bg.textContent = "Delete";
     row.appendChild(bg);
 
+    // Content
     const content = document.createElement("div");
     content.className = "row-content";
-
     content.innerHTML = `
-      <input
-        placeholder="Expense name"
-        value="${r.name}"
-        oninput="data.sheets[data.active].rows[${i}].name=this.value; save()"
-      >
-      <input
-        class="amount"
-        type="text"
-        placeholder="0.00"
-        value="${r.amount ? '$' + parseFloat(r.amount).toFixed(2) : ''}"
-        onfocus="{
-          if(this.value.startsWith('$')) this.value = this.value.replace('$','');
-        }"
-        onblur="{
-          let val = parseFloat(this.value) || 0;
-          this.value = '$' + val.toFixed(2);
-          data.sheets[data.active].rows[${i}].amount = val;
-          save();
-          recalc();
-        }"
-        oninput="{
-          let val = parseFloat(this.value) || 0;
-          data.sheets[data.active].rows[${i}].amount = val;
-          save();
-          recalc();
-        }"
-      >
+      <input placeholder="Expense name" value="${r.name}"
+        oninput="data.sheets[data.active].rows[${i}].name=this.value;save()">
+      <input class="amount" type="number" step="0.01" placeholder="0.00"
+        value="${r.amount}"
+        oninput="data.sheets[data.active].rows[${i}].amount=this.value;save();recalc()">
     `;
     row.appendChild(content);
     rowsEl.appendChild(row);
 
+    // ---- TOUCH EVENTS ONLY ----
     let startX = 0, currentX = 0, dragging = false;
 
     content.ontouchstart = e => {
       startX = e.touches[0].clientX;
       dragging = true;
+
+      if (swipedRow && swipedRow !== content) resetSwipedRow();
     };
 
     content.ontouchmove = e => {
       if (!dragging) return;
       currentX = e.touches[0].clientX - startX;
-      if (currentX < 0) { 
+      if (currentX < 0) {
         content.style.transform = `translateX(${Math.max(currentX, -120)}px)`;
+        row.classList.add("swiping");
       }
     };
 
     content.ontouchend = () => {
       dragging = false;
       if (currentX < -80) {
-        // slide row fully out
-        content.style.transition = "transform 0.2s ease";
-        content.style.transform = "translateX(-120px)";
-        swipedRow = content; // store reference
-
         showConfirm("Delete this row?", () => {
           sheet.rows.splice(i, 1);
           save();
           renderRows();
-          swipedRow = null;
-        });
+        }, content);
+        swipedRow = content;
       } else {
-        // slide back if below threshold
-        content.style.transition = "transform 0.2s ease";
-        content.style.transform = "translateX(0)";
+        resetSwipedRow();
       }
-      setTimeout(() => content.style.transition = "", 200);
       currentX = 0;
     };
 
+    // Desktop right-click delete
     row.oncontextmenu = e => {
       e.preventDefault();
       showConfirm("Delete this row?", () => {
@@ -467,17 +428,15 @@ function renderRows() {
   recalc();
 }
 
-// override cancelConfirm to slide back swiped row
-function cancelConfirm() {
-  confirmAction = null;
-  document.getElementById("confirm").classList.remove("show");
-  if (swipedRow) {
-    swipedRow.style.transition = "transform 0.2s ease";
-    swipedRow.style.transform = "translateX(0)";
-    setTimeout(() => swipedRow.style.transition = "", 200);
-    swipedRow = null;
-  }
+function resetSwipedRow() {
+  if (!swipedRow) return;
+  swipedRow.style.transition = "transform 0.2s ease";
+  swipedRow.style.transform = "translateX(0)";
+  swipedRow.parentElement?.classList.remove("swiping");
+  setTimeout(() => swipedRow.style.transition = "", 200);
+  swipedRow = null;
 }
+
 function addRow() {
   data.sheets[data.active].rows.push({ name: "", amount: "" });
   save();
@@ -545,7 +504,7 @@ function renderTabs() {
   add.className = "tab add";
   add.textContent = "+";
   add.onclick = () => {
-    data.sheets.push({ name: "New Tab", rows: [], netPay: 0 });
+    data.sheets.push({ name: "New Sheet", rows: [], netPay: 0 });
     data.active = data.sheets.length - 1;
     save();
     render();
@@ -555,8 +514,9 @@ function renderTabs() {
 
 /* ================= CONFIRM ================= */
 
-function showConfirm(text, action) {
+function showConfirm(text, action, row = null) {
   confirmAction = action;
+  if (row) swipedRow = row;
   document.getElementById("confirmText").textContent = text;
   document.getElementById("confirm").classList.add("show");
 }
@@ -564,6 +524,7 @@ function showConfirm(text, action) {
 function cancelConfirm() {
   confirmAction = null;
   document.getElementById("confirm").classList.remove("show");
+  if (swipedRow) resetSwipedRow();
 }
 
 function doConfirm() {
@@ -572,30 +533,19 @@ function doConfirm() {
 }
 
 /* ================= INIT ================= */
-netPayEl.onfocus = e => {
-  e.target.value = data.sheets[data.active].netPay || "";
-};
-
-netPayEl.onblur = e => {
-  const val = parseCurrency(e.target.value);
-  data.sheets[data.active].netPay = val;
-  e.target.value = "$" + formatCurrency(val);
-  save();
-  recalc();
-};
 
 netPayEl.oninput = e => {
-  data.sheets[data.active].netPay = parseCurrency(e.target.value);
+  data.sheets[data.active].netPay = parseFloat(e.target.value) || 0;
   save();
   recalc();
 };
 
 function render() {
-  const net = data.sheets[data.active].netPay || 0;
-  netPayEl.value = "$" + formatCurrency(net);
+  netPayEl.value = data.sheets[data.active].netPay;
   renderRows();
   renderTabs();
 }
+
 render();
 </script>
 </body>
