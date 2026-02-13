@@ -210,8 +210,8 @@ button:disabled {
 
 /* Superscript labels */
 .superscript-labels {
-  position: relative; /* container for absolute positioning */
-  height: 0; /* so it doesn't take vertical space */
+  position: relative; 
+  height: 0; 
 }
 
 #currentAmountLabel {
@@ -272,33 +272,35 @@ button:disabled {
 }
 .payment-float {
   position: absolute;
-  top: -20px;
   left: 50%;
-  transform: translateX(-50%);
-  font-size: 16px;
-  font-weight: 600;
+  transform: translateX(-50%) translateY(30px) scale(1.6);
+  font-size: 100px; 
+  font-weight: 700;
   color: #03CF00;
-  opacity: 0;
+  opacity: 1;
   pointer-events: none;
-  white-space: nowrap;        
-  max-width: 90%;         
-  overflow: hidden;           
-  text-align: center; 
-  animation: floatFade 1.6s ease-out forwards;
-  user-select:none;
+  white-space: nowrap;
+  text-align: center;
+  user-select: none;
   z-index: 999;
+
+animation: floatSatisfying 2.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
-@keyframes floatFade {
+
+@keyframes floatSatisfying {
   0% {
-    opacity: 0;
-    transform: translateX(-50%) translateY(10px); 
-  }
-  20% {
+    transform: translateX(-50%) translateY(30px) scale(1.6);
     opacity: 1;
   }
+
+  80% {
+    transform: translateX(-50%) translateY(-70px) scale(0.8);
+    opacity: 1;
+  }
+
   100% {
+    transform: translateX(-50%) translateY(-95px) scale(0.7);
     opacity: 0;
-    transform: translateX(-50%) translateY(-40px); 
   }
 }
 #ftr {
@@ -850,12 +852,9 @@ el.textContent = `–${moneyFormatter.format(amount)}`;
   el.style.top = topY + 'px';
 
 
-  el.style.animation = 'none';
-  el.offsetHeight; 
-  el.style.animation = 'floatFade 1.6s ease-out forwards';
 
  
-  setTimeout(() => el.remove(), 1600);
+  setTimeout(() => el.remove(), 1800);
 }
 
 startBtn.onclick = () => {
@@ -1164,4 +1163,3 @@ window.addEventListener("pageshow", (e) => {
 </script>
 </body>
 </html>
-
