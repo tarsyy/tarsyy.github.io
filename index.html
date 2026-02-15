@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Potty Break Calculator</title>
+<link rel="apple-touch-icon" href="Icon-1024.png.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #1a1d23;
+    --text: #e6e6e6;
+    --muted: #9aa0aa;
+    --accent: #4da3ff;
+    --danger: #ff4d4d;
+    --border: #2a2e36;
+  }
+
+  * {
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    padding: 16px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+    border-top:1px solid rgba(255,255,255,0.3);
+    border-left:1px solid rgba(255,255,255,0.1);
+      border-right:1px solid rgba(255,255,255,0.1);
+        border-bottom:1px solid rgba(255,255,255,0.1);
+  }
+
+  label {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  input, button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: #111318;
+    color: var(--text);
+  }
+
+  button {
+    margin-top: 12px;
+    background: var(--accent);
+    border: none;
+    font-weight: 600;
+  }
+
+  .clear-btn {
+    background: var(--danger);
+    margin-top: 8px;
+  }
+
+  .result-label {
+    text-align: center;
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .result-time {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  .log {
+    max-height: 240px;
+    overflow-y: auto;
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  .log-date {
+    font-weight: 700;
+    margin: 12px 0 6px;
+  }
+
+  .log-entry {
+    font-size: 14px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .log-entry span {
+    color: var(--muted);
+  }
+</style>
+</head>
+
+<body>
+
+<h1>Potty Break Calculator</h1>
+
+<div class="card">
+  <label>Interval (minutes)</label>
+  <input type="number" id="interval" min="1" max="60" value="30">
+
+  <label style="margin-top:12px;">Last Potty Time</label>
+  <input type="time" id="lastTime">
+
+  <label style="margin-top:12px;">Notes</label>
+  <input type="text" id="notes" placeholder="Optional">
+
+  <button onclick="calculate()">Calculate Next Potty Break</button>
+
+  <div class="result-label">Next Potty Break:</div>
+  <div class="result-time" id="result">—</div>
+</div>
+
+<div class="card">
+  <label>Log</label>
+  <div class="log" id="log"></div>
+  <button class="clear-btn" onclick="clearLog()">Clear Log</button>
+</div>
+
+<script>
+  const resultEl = document.getElementById("result");
+  const logEl = document.getElementById("log");
+
+  function formatTime(date) {
+    let h = date.getHours();
+    let m = date.getMinutes();
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12 || 12;
+    return `${h}:${m.toString().padStart(2, "0")} ${ampm}`;
+  }
+
+  function formatDate(date) {
+    return date.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+  }
+
+  function calculate() {
+    const interval = parseInt(document.getElementById("interval").value);
+    const timeValue = document.getElementById("lastTime").value;
+    const notes = document.getElementById("notes").value.trim();
+
+    if (!timeValue) return;
+
+    const [hour, minute] = timeValue.split(":").map(Number);
+    const lastDate = new Date();
+    lastDate.setHours(hour, minute, 0, 0);
+
+    const nextDate = new Date(lastDate);
+    nextDate.setMinutes(nextDate.getMinutes() + interval);
+
+    resultEl.textContent = formatTime(nextDate);
+
+    const log = JSON.parse(localStorage.getItem("pottyLog") || "[]");
+    log.unshift({
+      date: formatDate(lastDate),
+      time: formatTime(lastDate),
+      notes
+    });
+
+    localStorage.setItem("pottyLog", JSON.stringify(log));
+    document.getElementById("notes").value = "";
+    loadLog();
+  }
+
+  function loadLog() {
+    const log = JSON.parse(localStorage.getItem("pottyLog") || "[]");
+    logEl.innerHTML = "";
+
+    let lastRenderedDate = null;
+
+    log.forEach(entry => {
+      if (entry.date !== lastRenderedDate) {
+        const dateDiv = document.createElement("div");
+        dateDiv.className = "log-date";
+        dateDiv.textContent = entry.date;
+        logEl.appendChild(dateDiv);
+        lastRenderedDate = entry.date;
+      }
+
+      const div = document.createElement("div");
+      div.className = "log-entry";
+      div.innerHTML = `<span>${entry.notes || "No notes"}</span> — ${entry.time}`;
+      logEl.appendChild(div);
+    });
+  }
+
+  function clearLog() {
+    if (confirm("Are you sure you want to clear the entire log?")) {
+      localStorage.removeItem("pottyLog");
+      loadLog();
+    }
+  }
+
+  loadLog();
+</script>
+
+</body>
+</html>
