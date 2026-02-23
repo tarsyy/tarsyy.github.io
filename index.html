@@ -220,7 +220,7 @@ button:disabled {
   font-size: 14px;
   font-weight: 600;
   color: #aaa;
-  pointer-events: none;
+  pointer-events: auto;
   user-select: none;
   white-space: nowrap;
   transition: left 0.4s ease;
@@ -807,10 +807,34 @@ function updateProgress() {
 
 // --- SUPERSCRIPT LABEL ---
 const superscript = document.getElementById('currentAmountLabel'); 
+
 if (currentAmount <= 0) {
-  superscript.textContent = '';
+    superscript.textContent = '';
 } else {
-  superscript.textContent = moneyFormatter.format(currentAmount) + ' remaining';
+    // Standard view
+    superscript.textContent = moneyFormatter.format(currentAmount) + ' remaining';
+    
+    // CLICK EVENT for Daily Interest view
+    superscript.onclick = () => {
+        // Prevent multiple clicks restarting the timer weirdly
+        if (superscript.dataset.active === "true") return;
+        superscript.dataset.active = "true";
+
+        // Calculate 1 day of interest: Principal * (Rate / 100 / 365)
+        const dailyInterest = currentAmount * ((interestRate / 100) / 365);
+        const withInterest = currentAmount + dailyInterest;
+
+        // Show the new value
+        superscript.style.color = "#ff3b30"; // Turn red to show it's "growing"
+        superscript.textContent = moneyFormatter.format(withInterest) + ' remaining';
+
+        // Revert after 5 seconds
+        setTimeout(() => {
+            superscript.style.color = "#aaa";
+            superscript.textContent = moneyFormatter.format(currentAmount) + ' remaining';
+            superscript.dataset.active = "false";
+        }, 5000);
+    };
 }
 
 const barWidth = pb.parentElement.clientWidth;
@@ -1163,5 +1187,3 @@ window.addEventListener("pageshow", (e) => {
 </script>
 </body>
 </html>
-
-
