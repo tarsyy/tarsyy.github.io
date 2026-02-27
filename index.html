@@ -173,7 +173,7 @@
         }
 
         .badge.monthly { background-color: rgba(191, 90, 242, 0.2); color: var(--monthly-color); }
-        .badge.bi-weekly { background-color: rgba(50, 173, 230, 0.2); color: var(--biweekly-color); }
+        .badge.biweekly { background-color: rgba(50, 173, 230, 0.2); color: var(--biweekly-color); }
         .badge.checkpoint { background-color: rgba(255, 159, 10, 0.2); color: var(--checkpoint-color); }
         .badge.payoff { background-color: rgba(50, 215, 75, 0.2); color: var(--payoff-color); }
 
@@ -243,9 +243,9 @@
     color: var(--accent-color);
     border: 1px solid var(--divider-color);
     border-radius: 5px; /* Fixed double semicolon here */
-    width: 20px;
-    height: 20px;
-    font-size: 13px;
+    width: 50px;
+    height: 50px;
+    font-size: 15px;
     font-weight: bold;
     cursor: pointer;
     box-shadow: 0 4px 10px rgba(0,0,0,0.5);
@@ -420,7 +420,7 @@
                 nextMonthly.setMonth(nextMonthly.getMonth() + 1);
             } 
             else if (isBiWeekly) {
-                labels.push(currentDate <= today && !processCombinedCheckpoint ? "Past Bi-Weekly" : "Bi-Weekly");
+                labels.push(currentDate <= today && !processCombinedCheckpoint ? "Past BiWeekly" : "BiWeekly");
                 paymentAmount = 600.00;
                 nextBiWeekly.setDate(nextBiWeekly.getDate() + 14);
             }
@@ -482,7 +482,7 @@
         let badgesHtml = labels.map(label => {
             let badgeClass = '';
             if (label.includes('Monthly')) badgeClass = 'monthly';
-            else if (label.includes('Bi-Weekly')) badgeClass = 'bi-weekly';
+            else if (label.includes('BiWeekly')) badgeClass = 'biweekly';
             else if (label.includes('Checkpoint')) badgeClass = 'checkpoint';
             return `<span class="badge ${badgeClass}">${label.replace('Past ', '')}</span>`;
         }).join('');
@@ -494,10 +494,10 @@
                 <div class="badges">${badgesHtml}</div>
             </div>
             <div>
-                ${payment > 0 ? `<div class="row"><span>Payment</span> <span>${moneyFormatter.format(payment)}</span></div>` : ''}
-                <div class="row"><span>Accrued Interest</span> <span>${moneyFormatter.format(interest)}</span></div>
-                <div class="row"><span>Running Balance</span> <span>${moneyFormatter.format(runningBal)}</span></div>
-                <div class="row total"><span>Total Balance</span> <span>${moneyFormatter.format(totalBal)}</span></div>
+                ${payment > 0 ? `<div class="row"><span>payment</span> <span>${moneyFormatter.format(payment)}</span></div>` : ''}
+                <div class="row"><span>accrued interest</span> <span>${moneyFormatter.format(interest)}</span></div>
+                <div class="row"><span>running balance</span> <span>${moneyFormatter.format(runningBal)}</span></div>
+                <div class="row total"><span>total balance</span> <span>${moneyFormatter.format(totalBal)}</span></div>
             </div>
         </div>`;
     }
