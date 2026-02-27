@@ -277,7 +277,7 @@
 
     <div class="input-card">
         <label class="input-label" id="prompt-label">
-            enter the current balance as of [DATE]?
+            enter the current balance as of [DATE].
         </label>
         <div class="input-wrapper">
             <span>$</span>
@@ -311,7 +311,7 @@
 
     // Update the UI prompt with today's formatted date
     document.getElementById('prompt-label').textContent = 
-        `enter your current balance as of ${dateFormatter.format(today)}?`;
+        `enter the current balance as of ${dateFormatter.format(today)}.`;
 
     // 2. Local Storage Implementation
     const STORAGE_KEY = 'paydown_balance_input';
@@ -505,6 +505,7 @@
 
 </body>
 </html>
+
 
 
 
