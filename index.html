@@ -242,6 +242,7 @@
 </div>
 
 <script>
+    // Utility Formatter
     const moneyFormatter = new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
@@ -254,154 +255,174 @@
         year: 'numeric'
     });
 
+    // 1. Setup Today's Date
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // Update the UI prompt with today's formatted date
     document.getElementById('prompt-label').textContent = 
         `What is your current posted balance as of ${dateFormatter.format(today)}?`;
 
- function calculateProjection() {
-    const userInput = parseFloat(document.getElementById('balanceInput').value);
-    const resultsContainer = document.getElementById('results');
-    const calcButton = document.getElementById('calcButton');
+    // 2. Local Storage Implementation
+    const STORAGE_KEY = 'paydown_balance_input';
+    const balanceInput = document.getElementById('balanceInput');
 
-    if (isNaN(userInput)) {
-        alert("Please enter a valid balance.");
-        return;
-    }
+    // Load saved value on page load
+    window.addEventListener('load', () => {
+        const savedBalance = localStorage.getItem(STORAGE_KEY);
+        if (savedBalance) {
+            balanceInput.value = savedBalance;
+        }
+    });
 
-    // --- RESET FOR RE-ANIMATION ---
-    resultsContainer.classList.remove('visible');
-    resultsContainer.innerHTML = '';
+    function calculateProjection() {
+        const userInput = parseFloat(balanceInput.value);
+        const resultsContainer = document.getElementById('results');
+        const calcButton = document.getElementById('calcButton');
 
-    const START_BALANCE = 21847.03;
-    const INTEREST_RATE = 6.45;
-    const dailyRate = INTEREST_RATE / 100 / 365;
+        if (isNaN(userInput)) {
+            alert("Please enter a valid balance.");
+            return;
+        }
 
-    let nextMonthly = new Date(2026, 1, 1);
-    let nextBiWeekly = new Date(2026, 1, 13);
-    
-    let balance = START_BALANCE;
-    let accruedInterest = 0.0;
-    let lastEventDate = new Date(2026, 1, 1);
-    let checkpointProcessed = false;
+        // --- SAVE TO LOCAL STORAGE ---
+        localStorage.setItem(STORAGE_KEY, balanceInput.value);
 
-    let outputHtml = '';
-    let cardCount = 0; // Track count for staggered delay
+        // --- RESET FOR RE-ANIMATION ---
+        resultsContainer.classList.remove('visible');
+        resultsContainer.innerHTML = '';
 
-    for (let i = 0; i < 2000; i++) {
-        if (balance <= 0 && checkpointProcessed) break;
+        // =========================
+        // HARDCODED SETUP VARIABLES
+        // =========================
+        const START_BALANCE = 21847.03;
+        const INTEREST_RATE = 6.45;
+        const dailyRate = INTEREST_RATE / 100 / 365;
 
-        let nextScheduledDate = new Date(Math.min(nextMonthly, nextBiWeekly));
-        let currentDate = nextScheduledDate;
-        let processStandaloneCheckpoint = false;
-        let processCombinedCheckpoint = false;
+        let nextMonthly = new Date(2026, 1, 1);
+        let nextBiWeekly = new Date(2026, 1, 13);
+        
+        let balance = START_BALANCE;
+        let accruedInterest = 0.0;
+        let lastEventDate = new Date(2026, 1, 1);
+        let checkpointProcessed = false;
 
-        if (!checkpointProcessed) {
-            if (today < nextScheduledDate) {
-                processStandaloneCheckpoint = true;
-                currentDate = new Date(today);
-            } else if (today.getTime() === nextScheduledDate.getTime()) {
-                processCombinedCheckpoint = true;
-                currentDate = nextScheduledDate;
+        let outputHtml = '';
+        let cardCount = 0;
+
+        // Calculation Loop
+        for (let i = 0; i < 2000; i++) {
+            if (balance <= 0 && checkpointProcessed) break;
+
+            let nextScheduledDate = new Date(Math.min(nextMonthly, nextBiWeekly));
+            let currentDate = nextScheduledDate;
+            let processStandaloneCheckpoint = false;
+            let processCombinedCheckpoint = false;
+
+            if (!checkpointProcessed) {
+                if (today < nextScheduledDate) {
+                    processStandaloneCheckpoint = true;
+                    currentDate = new Date(today);
+                } else if (today.getTime() === nextScheduledDate.getTime()) {
+                    processCombinedCheckpoint = true;
+                    currentDate = nextScheduledDate;
+                }
             }
-        }
 
-        let daysElapsed = Math.round((currentDate - lastEventDate) / (1000 * 60 * 60 * 24));
-        accruedInterest += balance * dailyRate * daysElapsed;
+            let daysElapsed = Math.round((currentDate - lastEventDate) / (1000 * 60 * 60 * 24));
+            accruedInterest += balance * dailyRate * daysElapsed;
 
-        if (processStandaloneCheckpoint) {
-            balance = userInput; 
-            outputHtml += renderCard(currentDate, ['Checkpoint'], accruedInterest, 0, balance, balance + accruedInterest, cardCount++);
-            checkpointProcessed = true;
+            if (processStandaloneCheckpoint) {
+                balance = userInput; 
+                outputHtml += renderCard(currentDate, ['Checkpoint'], accruedInterest, 0, balance, balance + accruedInterest, cardCount++);
+                checkpointProcessed = true;
+                lastEventDate = currentDate;
+                continue; 
+            }
+
+            let isMonthly = nextMonthly.getTime() === currentDate.getTime();
+            let isBiWeekly = !isMonthly && nextBiWeekly.getTime() === currentDate.getTime();
+
+            let labels = [];
+            let paymentAmount = 0;
+
+            if (isMonthly) {
+                labels.push(currentDate <= today && !processCombinedCheckpoint ? "Past Monthly" : "Monthly");
+                paymentAmount = 690.00;
+                balance += accruedInterest;
+                accruedInterest = 0.0;
+                nextMonthly.setMonth(nextMonthly.getMonth() + 1);
+            } 
+            else if (isBiWeekly) {
+                labels.push(currentDate <= today && !processCombinedCheckpoint ? "Past Bi-Weekly" : "Bi-Weekly");
+                paymentAmount = 600.00;
+                nextBiWeekly.setDate(nextBiWeekly.getDate() + 14);
+            }
+
+            if (processCombinedCheckpoint) {
+                labels.push('Checkpoint');
+                balance = userInput; 
+                checkpointProcessed = true;
+            } else {
+                let actualPayment = Math.min(paymentAmount, balance);
+                balance -= actualPayment;
+            }
+
+            outputHtml += renderCard(currentDate, labels, accruedInterest, paymentAmount, balance, balance + accruedInterest, cardCount++);
             lastEventDate = currentDate;
-            continue; 
         }
 
-        let isMonthly = nextMonthly.getTime() === currentDate.getTime();
-        let isBiWeekly = !isMonthly && nextBiWeekly.getTime() === currentDate.getTime();
+        outputHtml += renderCard(lastEventDate, ['Payoff Complete'], 0, 0, 0, 0, cardCount++);
 
-        let labels = [];
-        let paymentAmount = 0;
-
-        if (isMonthly) {
-            labels.push(currentDate <= today && !processCombinedCheckpoint ? "Past Monthly" : "Monthly");
-            paymentAmount = 690.00;
-            balance += accruedInterest;
-            accruedInterest = 0.0;
-            nextMonthly.setMonth(nextMonthly.getMonth() + 1);
-        } 
-        else if (isBiWeekly) {
-            labels.push(currentDate <= today && !processCombinedCheckpoint ? "Past Bi-Weekly" : "Bi-Weekly");
-            paymentAmount = 600.00;
-            nextBiWeekly.setDate(nextBiWeekly.getDate() + 14);
-        }
-
-        if (processCombinedCheckpoint) {
-            labels.push('Checkpoint');
-            balance = userInput; 
-            checkpointProcessed = true;
-        } else {
-            let actualPayment = Math.min(paymentAmount, balance);
-            balance -= actualPayment;
-        }
-
-        outputHtml += renderCard(currentDate, labels, accruedInterest, paymentAmount, balance, balance + accruedInterest, cardCount++);
-        lastEventDate = currentDate;
+        // --- TRIGGER STAGGERED REVEAL ---
+        setTimeout(() => {
+            resultsContainer.innerHTML = outputHtml;
+            requestAnimationFrame(() => {
+                resultsContainer.classList.add('visible');
+            });
+            calcButton.textContent = 'Recalculate';
+        }, 50);
     }
 
-    outputHtml += renderCard(lastEventDate, ['Payoff Complete'], 0, 0, 0, 0, cardCount++);
+    // HTML Generator for UI Cards
+    function renderCard(dateObj, labels, interest, payment, runningBal, totalBal, index) {
+        const formattedDate = dateFormatter.format(dateObj);
+        const delay = index * 0.05; 
+        
+        if (labels.includes('Payoff Complete')) {
+            return `
+            <div class="card" style="border: 1px solid var(--payoff-color); transition-delay: ${delay}s">
+                <div class="card-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+                    <span class="card-date">${formattedDate}</span>
+                    <div class="badges"><span class="badge payoff">DEBT PAID OFF</span></div>
+                </div>
+            </div>`;
+        }
 
-    // --- TRIGGER STAGGERED REVEAL ---
-    setTimeout(() => {
-        resultsContainer.innerHTML = outputHtml;
-        // Small delay to ensure browser registers the DOM change before animating
-        requestAnimationFrame(() => {
-            resultsContainer.classList.add('visible');
-        });
-        calcButton.textContent = 'Recalculate';
-    }, 50);
-}
+        let badgesHtml = labels.map(label => {
+            let badgeClass = '';
+            if (label.includes('Monthly')) badgeClass = 'monthly';
+            else if (label.includes('Bi-Weekly')) badgeClass = 'bi-weekly';
+            else if (label.includes('Checkpoint')) badgeClass = 'checkpoint';
+            return `<span class="badge ${badgeClass}">${label.replace('Past ', '')}</span>`;
+        }).join('');
 
-// Add index parameter at the end
-function renderCard(dateObj, labels, interest, payment, runningBal, totalBal, index) {
-    const formattedDate = dateFormatter.format(dateObj);
-    // 0.05s (50ms) delay per card creates a smooth waterfall effect
-    const delay = index * 0.05; 
-    
-    if (labels.includes('Payoff Complete')) {
         return `
-        <div class="card" style="border: 1px solid var(--payoff-color); transition-delay: ${delay}s">
-            <div class="card-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+        <div class="card" style="transition-delay: ${delay}s">
+            <div class="card-header">
                 <span class="card-date">${formattedDate}</span>
-                <div class="badges"><span class="badge payoff">DEBT PAID OFF</span></div>
+                <div class="badges">${badgesHtml}</div>
+            </div>
+            <div>
+                ${payment > 0 ? `<div class="row"><span>Payment</span> <span>${moneyFormatter.format(payment)}</span></div>` : ''}
+                <div class="row"><span>Accrued Interest</span> <span>${moneyFormatter.format(interest)}</span></div>
+                <div class="row"><span>Running Balance</span> <span>${moneyFormatter.format(runningBal)}</span></div>
+                <div class="row total"><span>Total Balance</span> <span>${moneyFormatter.format(totalBal)}</span></div>
             </div>
         </div>`;
     }
-
-    let badgesHtml = labels.map(label => {
-        let badgeClass = '';
-        if (label.includes('Monthly')) badgeClass = 'monthly';
-        else if (label.includes('Bi-Weekly')) badgeClass = 'bi-weekly';
-        else if (label.includes('Checkpoint')) badgeClass = 'checkpoint';
-        return `<span class="badge ${badgeClass}">${label.replace('Past ', '')}</span>`;
-    }).join('');
-
-    return `
-    <div class="card" style="transition-delay: ${delay}s">
-        <div class="card-header">
-            <span class="card-date">${formattedDate}</span>
-            <div class="badges">${badgesHtml}</div>
-        </div>
-        <div>
-            ${payment > 0 ? `<div class="row"><span>Payment</span> <span>${moneyFormatter.format(payment)}</span></div>` : ''}
-            <div class="row"><span>Accrued Interest</span> <span>${moneyFormatter.format(interest)}</span></div>
-            <div class="row"><span>Running Balance</span> <span>${moneyFormatter.format(runningBal)}</span></div>
-            <div class="row total"><span>Total Balance</span> <span>${moneyFormatter.format(totalBal)}</span></div>
-        </div>
-    </div>`;
-}
 </script>
 
 </body>
 </html>
+
