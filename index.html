@@ -1,1189 +1,407 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Paydown Progress</title>
-<link rel="apple-touch-icon" href="icon_new.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Paydown Progress v2</title>
+    <link rel="apple-touch-icon" href="icon_new.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        :root {
+            --bg-color: #000000;
+            --surface-color: #1c1c1e;
+            --text-primary: #f2f2f7;
+            --text-secondary: #8e8e93;
+            --accent-color: #0a84ff;
+            --monthly-color: #bf5af2;
+            --biweekly-color: #32ade6;
+            --checkpoint-color: #ff9f0a;
+            --payoff-color: #32d74b;
+            --divider-color: #38383a;
+            --payoff-red: #ff453a;
+        }
 
-<style>
-/* Base layout */
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background-color: #000;
-  color: #e0e0e0;
-  margin: 0;
-  display: flex;
-  justify-content: center;
-}
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-body.no-scroll {
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-}
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
 
-.container {
-  max-width: 430px;
-  width: 100%;
-  padding: 20px;
-  position: relative; 
-  z-index:1;
-  background-color:#000;
-}
+        .container {
+            padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)) 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
 
-/* Headings */
-h1 {
-  text-align: center;
-  color: #fff;
-  margin-bottom: 20px;
-  user-select:none;
-    margin-bottom: 40px;
-}
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
 
-/* Shared form controls */
-input,
-button {
-  font-size: 18px;
-  padding: 14px;
-  width: 100%;
-  border-radius: 12px;
-  border: none;
-  box-sizing: border-box;
-}
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+        }
 
-/* Inputs */
-input {
-  background: #1e1e1e;
-  color: #e0e0e0;
+        .header p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin: 0;
+        }
 
-}
-input:focus {
-  outline: 2px solid #FFFFFF; 
-  outline-offset: 2px;       
-  background-color: #2a2a2a; 
-}
-button {
-  background: #007aff;
-  color: #fff;
-  cursor: pointer;
- -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  user-select: none;
-  min-height: 44px;
-  transition: transform 0.08s ease, background-color 0.3s ease, opacity 0.15s ease;
-  will-change: transform;
-  border-top:2px solid rgba(255,255,255,0.6);
-}
+        .input-card {
+            background-color: var(--surface-color);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
 
-button:active {
-  transform: scale(0.96);
-  opacity: 0.9;
-}
+        .input-label {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
 
-button:disabled {
-  opacity: 0.5;
-}
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
 
-/* Setup spacing */
-#setup input {
-  margin-bottom: 16px;
-}
+        .input-wrapper span {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
 
-#setup button {
-  margin-top: 10px;
-}
+        input[type="number"] {
+            width: 100%;
+            background-color: #2c2c2e;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 16px 16px 36px;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            outline: none;
+            appearance: none;
+        }
 
-/*PROGRESS BAR - Glass Vial Design*/
+        button {
+            width: 100%;
+            background-color: var(--accent-color);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
 
-.progress-container {
-  position: relative;
-  width: 100%;
-  height: 30px;
-  margin: 20px 0;
-  border-radius: 20px;
-  overflow: hidden;
-  background: #000000;
+        button:active {
+            opacity: 0.7;
+        }
 
-  /* Glass depth */
-  box-shadow:                     
-    inset 0 1px 3px rgba(255,255,255,0.7),   
-    inset 0 -4px 6px rgba(0,0,0,1);        
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  clip-path: inset(0 round 20px);
-}
+        .results {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
 
-.progress-container::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    rgba(255,255,255,0.25) 0%,
-    rgba(255,255,255,0.05) 50%,
-    transparent 100%
-  );
-  z-index: 2;
-}
-
-
-.progress-container::before {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  border-radius: inherit;
-  background: rgba(255,255,255,0.03);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.progress-bar::before {
-  content: "";
-  position: absolute;
-  top: 0;        
-  left: 0;
-  right: 0;
-  bottom: 0;     
-  border-radius: inherit;
-  background: linear-gradient(
-    to bottom,
-    rgba(255,255,255,0.35) 0%,   
-    rgba(255,255,255,0.08) 15%,  
-    rgba(255,255,255,0) 100%     
-  );
-  pointer-events: none;
-  z-index: 2;
-}
-
-
-.progress-bar {
-  height: 100%;       
-  width: 0%;
-  border-radius: 20px; 
-  background: linear-gradient(90deg, #4ade80, #22c55e, #16a34a);
-  background-size: 300% 100%;
-  transition: width 0.4s ease;
-  position: relative;
-  z-index: 1; 
-  overflow: hidden;    
-}
-
-/* Animated flowing liquid */
-.progress-bar.flowing {
-  background: linear-gradient(
-    90deg,
-    #007aff 0%,
-    #34c759 50%,
-    #007aff 100%
-  );
-  background-size: 200% 100%;
-  animation: flowGradient 5s linear infinite;
-}
-
-@keyframes flowGradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 200% 50%;
-  }
-}
-/* RGB celebration */
-.progress-bar.finished {
-  animation: rgbPulse 2s linear infinite;
-}
-
-@keyframes rgbPulse {
-  0%   { background: red; }
-  16%  { background: orange; }
-  32%  { background: yellow; }
-  48%  { background: green; }
-  64%  { background: blue; }
-  80%  { background: violet; }
-  100% { background: red; }
-}
-
-/* Superscript labels */
-.superscript-labels {
-  position: relative; 
-  height: 0; 
-}
-
-#currentAmountLabel {
-
-  position: absolute;
-  font-size: 14px;
-  font-weight: 600;
-  color: #aaa;
-  pointer-events: auto;
-  user-select: none;
-  white-space: nowrap;
-  transition: left 0.4s ease;
-}
-/* Add payment row */
-.add-payment-wrapper {
-  display: none;
-  gap: 8px;
-  align-items: center;
-  margin-top: 10px;
-}
-
-.add-payment-wrapper.show {
-  display: flex;
-}
-
-.add-payment-wrapper input {
-  flex: 1;
-  margin-bottom: 0;
-}
-.cancel-btn {
-  width: 48px;
-  height: 48px;
-  padding: 0;
-  background: #ff3b30;
-  color: #fff;
-  border-radius: 12px;
-  font-size: 22px;
-}
-.summary {
-  margin-top: 10px;
-  user-select:none;
-  text-align:center;
-}
-.next-payment {
-  font-size: 11px;
-  font-style: italic;
-  color: #fff;
-  margin: 8px 0;
-  text-align:center;
-  user-select:none;
-}
-#toggleAddPayment {
-  margin-top: 12px;
-}
-
-#toggleAddPayment.active {
-  background-color: #2e6f40;
-}
-.payment-float {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%) translateY(30px) scale(1.6);
-  font-size: 60px; 
-  font-weight: 700;
-  color: #03CF00;
-  opacity: 1;
-  pointer-events: none;
-  white-space: nowrap;
-  text-align: center;
-  user-select: none;
-  z-index: 999;
-
-animation: floatSatisfying 2.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-@keyframes floatSatisfying {
-  0% {
-    transform: translateX(-50%) translateY(30px) scale(1.6);
-    opacity: 1;
-  }
-
-  80% {
-    transform: translateX(-50%) translateY(-70px) scale(0.8);
-    opacity: 1;
-  }
-
-  100% {
-    transform: translateX(-50%) translateY(-95px) scale(0.7);
+       /* Container stays static, cards animate */
+.card {
+    background-color: var(--surface-color);
+    border-radius: 16px;
+    padding: 16px;
     opacity: 0;
-  }
-}
-#ftr {
-  position: absolute;       
-  bottom: -5px;             
-  right: 30px;               
-  font-size: 12px;
-  color: #aaa;
-  user-select: none;
-  pointer-events: none;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
-@media (hover: hover) {
-  button:hover {
-    filter: brightness(1.1);
-  }
-}
-#interestWrapper {
-  display: none;
-  gap: 8px;
-  align-items: center;
-  margin-top: 10px;
-}
-
-#interestWrapper.show {
-  display: flex;
-}
-
-#interestWrapper input {
-  flex: 1;
-  margin-bottom: 0;
-}
-
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.8);
-  backdrop-filter: blur(0px); 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-  opacity: 0; 
-  pointer-events: none;   
-  touch-action: none;
-  transition: opacity 0.4s ease, backdrop-filter 0.4s ease;
-  
-}
-
-.overlay.show {
-  opacity: 1;
-  backdrop-filter: blur(8px);
-  pointer-events: auto; 
-}
-.overlay-content {
-  background: #1e1e1e;
-  padding: 30px;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 350px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: inset 0 4px 6px -4px rgba(255,255,255,0.6);
-  gap: 12px;
-  transform: translateY(20px) scale(0.95);
-  opacity: 0;
-  transition: transform 0.4s ease, opacity 0.4s ease;
-}
-.overlay.show .overlay-content {
-  transform: translateY(0) scale(1);
-  opacity: 1;
-}
-.overlay-content h2 {
-  margin: 0 0 12px 0;
-  color: #fff;
-  text-align: center;
-}
-.overlay-content input {
-  padding: 12px;
-  font-size: 16px;
-  border-radius: 12px;
-  border: none;
-  background: #2a2a2a;
-  color: #e0e0e0;
-}
-.overlay-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-
-}
-.overlay-buttons button {
-  flex: 1;
-  padding: 12px;
-  border-radius: 12px;
-  font-size: 16px;
-  border-top:2px solid rgba(255,255,255,0.6);
-  color: #fff;
-  cursor: pointer;
-}
-.overlay-input-group {
-  display: flex;
-  flex-direction: column;
-}
-.overlay-input-group sup {
-  color: #aaa;
-  font-size: 12px;
-  margin-bottom: 4px;
-  text-align: left;
-}
-#additionalPaymentText{
-margin-top:5px;
-font-size:0.9rem;
-user-select:none;
-text-align:center;
-}
-.date-wrapper {
-  position: relative;
-  border-radius: 12px;
-  background-color: #2a2a2a; 
-  overflow: hidden;
-}
-.date-wrapper input[type="date"] {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 44px; 
-  padding: 0 14px; 
-  font-size: 16px;
-  border: none;
-  border-radius: 12px;
-  color: #e0e0e0;
-  box-sizing: border-box;
-  background-color: transparent; 
-}
-.date-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
-  right: 14px;
-  height: 24px;
-  width: 24px;
-  filter: invert(1);
-}
-/* Setup number & date inputs */
-#setup .setup-input-group input[type="number"],
-#setup .setup-input-group input[type="date"] {
-  height: 44px;
-  font-size: 16px;
-  padding: 0 14px;     
-  border-radius: 12px;
-  border: none;
-  background: #2a2a2a;
-  color: #e0e0e0;
-  box-sizing: border-box;
-  line-height: normal;   
-}
-/* Date wrapper for setup */
-#setup .setup-input-group .date-wrapper {         
-  height: 44px;
-}
-/* Date input inside wrapper */
-#setup .setup-input-group .date-wrapper input[type="date"] {
-  -webkit-appearance: none;   
-  -moz-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: auto;           
-  font-size: 16px;
-  padding: 10px 14px;         
-  border: none;
-  border-radius: 12px;
-  background-color: transparent;
-  color: #e0e0e0;
-  box-sizing: border-box;
-  line-height: normal;        
-  display: block;           
-}
-
-/* Date input focus outline */
-#setup .setup-input-group .date-wrapper input[type="date"]:focus {
-outline:none;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
 
-.progress-current-label {
-  position: absolute;
-  top: 0; /* adjust to sit above bar */
-  font-size: 14px;
-  font-weight: 600;
-  color: #03CF00;
-  pointer-events: none;
-  user-select: none;
-  white-space: nowrap;
-  transition: left 0.4s ease;
-  z-index: 10;
+        #results.visible .card {
+        opacity: 1;
+        transform: translateY(0);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--divider-color);
+        }
+
+        .card-date {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Container for multiple badges */
+        .badges {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .badge {
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge.monthly { background-color: rgba(191, 90, 242, 0.2); color: var(--monthly-color); }
+        .badge.bi-weekly { background-color: rgba(50, 173, 230, 0.2); color: var(--biweekly-color); }
+        .badge.checkpoint { background-color: rgba(255, 159, 10, 0.2); color: var(--checkpoint-color); }
+        .badge.payoff { background-color: rgba(50, 215, 75, 0.2); color: var(--payoff-color); }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .row:last-child {
+            margin-bottom: 0;
+        }
+
+        .row span:first-child {
+            color: var(--text-secondary);
+        }
+
+        .row span:last-child {
+            font-weight: 500;
+        }
+
+        .row.total {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--divider-color);
+            font-size: 16px;
+        }
+        
+        .row.total span:first-child { color: var(--text-primary); font-weight: 600; }
+        .row.total span:last-child { 
+    font-weight: 700; 
+    color: var(--payoff-red); /* Changed from --accent-color to red */
 }
 
-
-
-
-</style>
+        #results {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        #results.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
 </head>
-
 <body>
 
 <div class="container">
-
-<h1 id="titleText">Paydown Progress</h1> 
-<!-- Overlay -->
-<div id="settingsOverlay" class="overlay">
-  <div class="overlay-content">
-    <h2>User Settings</h2>
-    <div class="overlay-input-group">
-      <sup>Starting Amount ($)</sup>
-      <input id="overlayStartingAmount" type="number">
+    <div class="header">
+        <h1>Paydown Progress v2</h1>
     </div>
-    <div class="overlay-input-group">
-      <sup>Current Amount ($)</sup>
-      <input id="overlayCurrentAmount" type="number" >
+
+    <div class="input-card">
+        <label class="input-label" id="prompt-label">
+            What is your current posted balance as of [DATE]?
+        </label>
+        <div class="input-wrapper">
+            <span>$</span>
+            <input type="number" id="balanceInput" step="0.01" inputmode="decimal" value="0">
+        </div>
+      <button id="calcButton" onclick="calculateProjection()">Calculate Projection</button>
     </div>
-    <div class="overlay-input-group">
-      <sup>Interest Rate (%)</sup>
-      <input id="overlayInterestRate" type="number" >
-    </div>
- <div class="overlay-input-group">
-  <sup>Target Payoff Date</sup>
-  <div class="date-wrapper">
-    <input id="overlayTargetPayoffDate" type="date">
-  </div>
+
+    <div id="results" class="results"></div>
 </div>
-    <div class="overlay-buttons">
-      <button id="saveSettingsBtn" style="background:#007aff;">Save</button>
-      <button id="cancelSettingsBtn" style="background:#ff3b30;">Cancel</button>
-    </div>
-  </div>
-</div>
-<div id="setup">
-  <div class="setup-input-group">
-    <sup>Starting Amount ($)</sup>
-    <input id="startingAmount" type="number" placeholder="Starting Amount ($)">
-  </div>
-  <div class="setup-input-group">
-    <sup>Current Amount ($)</sup>
-    <input id="currentAmount" type="number" placeholder="Current Amount ($)">
-  </div>
-  <div class="setup-input-group">
-    <sup>Interest Rate (%)</sup>
-    <input id="interestRate" type="number" placeholder="Interest Rate (%)">
-  </div>
-  <div class="setup-input-group">
-    <sup>Target Payoff Date</sup>
-    <div class="date-wrapper">
-      <input id="targetPayoffDate" type="date" placeholder="Target Payoff Date">
-    </div>
-  </div>
-    <button id="startBtn" style="margin-top:10px;">Start Tracker</button>
-</div>
-
-
-
-<div id="tracker" style="display:none;">
-  <div class="superscript-labels">
-  <div id="currentAmountLabel"></div>
-</div>
-<div class="progress-container">
-  <div class="progress-bar" id="progressBar"></div>
-</div>
-
-
-   <div class="summary" id="summaryText"></div>
-  <div class="additional-payment" id="additionalPaymentText"></div>
-    <div class="next-payment" id="nextPaymentText"></div>
-
-  <div class="add-payment-wrapper" id="addPaymentWrapper">
-    <input id="extraPaymentInput" type="number" placeholder="Extra payment ($)">
-    <button class="cancel-btn" id="cancelAddPayment">×</button>
-  </div>
-
-  <button id="toggleAddPayment">Add Payment</button>
-
-  <!-- Edit User Settings Button -->
-  <button
-    id="editSettingsBtn"
-    style="background:#2D3745; margin-top:10px; margin-bottom:10px;"
-  >
-    Edit User Settings
-  </button>
-
-  <!-- Reset -->
-  <button
-    id="resetBtn"
-    style="background:#ff3b30; margin-top:18px;"
-  >
-    Reset Tracker
-  </button>
-
-  <!-- Import / Export -->
-  <div style="display:flex; gap:8px; margin-top:10px;">
-    <button id="importBtn" style="flex:1; background:#666666;">
-      Import Data
-    </button>
-    <button id="exportBtn" style="flex:1; background:#666666;">
-      Export Data
-    </button>
-    <input
-      type="file"
-      id="fileInput"
-      style="display:none;"
-      accept=".json"
-    >
-  </div>
-</div>
-
-<div id="ftr">Test</div>
-
-
 
 <script>
+    const moneyFormatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2
+    });
 
-const editSettingsBtn = document.getElementById('editSettingsBtn');
-const settingsOverlay = document.getElementById('settingsOverlay');
-const overlayStartingAmount = document.getElementById('overlayStartingAmount');
-const overlayCurrentAmount = document.getElementById('overlayCurrentAmount');
-const overlayInterestRate = document.getElementById('overlayInterestRate');
-const overlayTargetPayoffDate = document.getElementById('overlayTargetPayoffDate');
-const saveSettingsBtn = document.getElementById('saveSettingsBtn');
-const cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
-const extraPaymentInput = document.getElementById('extraPaymentInput');
-const cancelAddPayment = document.getElementById('cancelAddPayment');
-const toggleAddPayment = document.getElementById('toggleAddPayment');
+    const dateFormatter = new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
 
-let scrollPosition = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-const moneyFormatter = new Intl.NumberFormat('en-CA', {
-  style: 'currency',
-  currency: 'CAD',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2
-});
+    document.getElementById('prompt-label').textContent = 
+        `What is your current posted balance as of ${dateFormatter.format(today)}?`;
 
-function disableScroll() {
-  scrollPosition = window.scrollY;
+ function calculateProjection() {
+    const userInput = parseFloat(document.getElementById('balanceInput').value);
+    const resultsContainer = document.getElementById('results');
+    const calcButton = document.getElementById('calcButton');
 
-  document.body.classList.add('no-scroll');
-  document.body.style.top = `-${scrollPosition}px`;
-}
+    if (isNaN(userInput)) {
+        alert("Please enter a valid balance.");
+        return;
+    }
 
-function enableScroll() {
-  document.body.classList.remove('no-scroll');
-  document.body.style.top = '';
+    // --- RESET FOR RE-ANIMATION ---
+    resultsContainer.classList.remove('visible');
+    resultsContainer.innerHTML = '';
 
-  window.scrollTo(0, scrollPosition);
-}
+    const START_BALANCE = 21847.03;
+    const INTEREST_RATE = 6.45;
+    const dailyRate = INTEREST_RATE / 100 / 365;
 
-
-// Open overlay
-editSettingsBtn.onclick = () => {
-  const saved = JSON.parse(localStorage.getItem('debtTracker'));
-  if (saved) {
-    overlayStartingAmount.value = saved.startingAmount || 0;
-    overlayCurrentAmount.value = saved.currentAmount || 0;
-    overlayInterestRate.value = saved.interestRate || 0;
-    overlayTargetPayoffDate.value = saved.targetPayoffDate || '';
-  }
-  settingsOverlay.classList.add('show');
-  disableScroll();
-};
-
-// Close overlay
-cancelSettingsBtn.onclick = () => {
-  settingsOverlay.classList.remove('show');
-   enableScroll();
-};
-// Save overlay
-saveSettingsBtn.onclick = () => {
-  const sa = parseFloat(overlayStartingAmount.value);
-  const ca = parseFloat(overlayCurrentAmount.value);
-  const ir = parseFloat(overlayInterestRate.value);
-  const tpd = overlayTargetPayoffDate.value;
-
-  if (
-    isNaN(sa) || sa <= 0 ||
-    isNaN(ca) || ca < 0 || ca > sa ||
-    isNaN(ir) || ir < 0
-  ) {
-    alert("Please enter valid numeric values.");
-    return;
-  }
-
-  // Update variables
-  startingAmount = sa;
-  currentAmount = ca;
-  interestRate = ir;
-  targetPayoffDate = tpd;
-  
-  targetDateInput.value = tpd;
-  
-  updateAdditionalPaymentText();
-
-  // Save to localStorage
-  localStorage.setItem('debtTracker', JSON.stringify({startingAmount, currentAmount, interestRate,targetPayoffDate}));
-
-
-
-localStorage.removeItem('lastInterestApplied');
-
-  // Show tracker if hidden
-  setup.style.display = 'none';
-  tracker.style.display = 'block';
-  editSettingsBtn.style.display = 'block';
-
-  // Apply monthly logic and update progress
-  applyMonthlyLogic();
-  updateProgress();
-  saveTracker();
-  settingsOverlay.classList.remove('show');
-  enableScroll();
-};
-
-const startingAmountInput = document.getElementById('startingAmount');
-const currentAmountInput  = document.getElementById('currentAmount');
-const interestRateInput   = document.getElementById('interestRate');
-
-
-let startingAmount=0, currentAmount=0, interestRate=0, targetPayoffDate='';
-
-const pb = document.getElementById('progressBar');
-const tracker = document.getElementById('tracker');
-const setup = document.getElementById('setup');
-const wrapper = document.getElementById('addPaymentWrapper');
-const addBtn = document.getElementById('toggleAddPayment');
-
-function applyMonthlyLogic() {
- if (interestRate <= 0 || currentAmount <= 0) return;
-
-  const now = new Date();
-
-  // Only apply on the 1st
-  if (now.getDate() !== 1) return;
-
-  const monthKey = `${now.getFullYear()}-${now.getMonth() + 1}`;
-  const lastApplied = localStorage.getItem('lastInterestApplied');
-
-  // Already applied for this month → do nothing
-  if (lastApplied === monthKey) return;
-
-  // Apply monthly interest
-  const monthlyRate = (interestRate / 100) / 12;
-  currentAmount += currentAmount * monthlyRate;
-
-  // Guard against tiny floating point noise
-  currentAmount = Math.round(currentAmount * 100) / 100;
-
-  // Persist that we've applied interest this month
-  localStorage.setItem('lastInterestApplied', monthKey);
-
-  saveTracker();
-}
-
-
-function saveTracker() {
-  localStorage.setItem('debtTracker', JSON.stringify({
-    startingAmount,
-    currentAmount,
-    interestRate,
-    targetPayoffDate
-  }));
-}
-
-function updateProgress() {
-  if (startingAmount <= 0) return;
-
-  const paid = startingAmount - currentAmount;
-  const pct = Math.min((paid / startingAmount) * 100, 100);
-  const title = document.getElementById("titleText");
-
-  // Reset progress bar classes
-  pb.className = 'progress-bar';
-
-  if (currentAmount <= 0) {
-    pb.classList.add('finished');
-    addBtn.style.display = 'none';
-    wrapper.style.display = 'none';
-    document.getElementById('summaryText').textContent = "Debt Paid Off!";
-    document.getElementById('nextPaymentText').textContent = '';
-    document.getElementById('additionalPaymentText').textContent = '';
-    document.getElementById('editSettingsBtn').style.display = "none";
-    title.textContent = "DEBT PAID OFF! 🎉";
-
-  } else {
-    pb.classList.add('flowing');
-    updateAdditionalPaymentText();
-  }
-
-
-  pb.style.transition = 'none';
-  pb.style.width = '0%';
-  pb.offsetHeight; 
-  pb.style.transition = 'width 0.4s ease';
-  requestAnimationFrame(() => {
-    pb.style.width = pct + '%';
-  });
-
-// --- SUPERSCRIPT LABEL ---
-const superscript = document.getElementById('currentAmountLabel'); 
-
-if (currentAmount <= 0) {
-    superscript.textContent = '';
-} else {
-    // Standard view
-    superscript.textContent = moneyFormatter.format(currentAmount) + ' remaining';
+    let nextMonthly = new Date(2026, 1, 1);
+    let nextBiWeekly = new Date(2026, 1, 13);
     
-    // CLICK EVENT for Daily Interest view
-    superscript.onclick = () => {
-        // Prevent multiple clicks restarting the timer weirdly
-        if (superscript.dataset.active === "true") return;
-        superscript.dataset.active = "true";
+    let balance = START_BALANCE;
+    let accruedInterest = 0.0;
+    let lastEventDate = new Date(2026, 1, 1);
+    let checkpointProcessed = false;
 
-        // Calculate 1 day of interest: Principal * (Rate / 100 / 365)
-        const dailyInterest = currentAmount * ((interestRate / 100) / 365);
-        const withInterest = currentAmount + dailyInterest;
+    let outputHtml = '';
+    let cardCount = 0; // Track count for staggered delay
 
-        // Show the new value
-        superscript.style.color = "#ff3b30"; // Turn red to show it's "growing"
-        superscript.textContent = moneyFormatter.format(withInterest) + ' remaining';
+    for (let i = 0; i < 2000; i++) {
+        if (balance <= 0 && checkpointProcessed) break;
 
-        // Revert after 5 seconds
-        setTimeout(() => {
-            superscript.style.color = "#aaa";
-            superscript.textContent = moneyFormatter.format(currentAmount) + ' remaining';
-            superscript.dataset.active = "false";
-        }, 5000);
-    };
-}
+        let nextScheduledDate = new Date(Math.min(nextMonthly, nextBiWeekly));
+        let currentDate = nextScheduledDate;
+        let processStandaloneCheckpoint = false;
+        let processCombinedCheckpoint = false;
 
-const barWidth = pb.parentElement.clientWidth;
-const labelWidth = superscript.offsetWidth;
+        if (!checkpointProcessed) {
+            if (today < nextScheduledDate) {
+                processStandaloneCheckpoint = true;
+                currentDate = new Date(today);
+            } else if (today.getTime() === nextScheduledDate.getTime()) {
+                processCombinedCheckpoint = true;
+                currentDate = nextScheduledDate;
+            }
+        }
 
-const labelOffsetFactor = 0; // 0 = left-align, 0.5 = center, 1 = right-align
-let leftPos = (pct / 100) * barWidth - labelWidth * labelOffsetFactor;
+        let daysElapsed = Math.round((currentDate - lastEventDate) / (1000 * 60 * 60 * 24));
+        accruedInterest += balance * dailyRate * daysElapsed;
 
+        if (processStandaloneCheckpoint) {
+            balance = userInput; 
+            outputHtml += renderCard(currentDate, ['Checkpoint'], accruedInterest, 0, balance, balance + accruedInterest, cardCount++);
+            checkpointProcessed = true;
+            lastEventDate = currentDate;
+            continue; 
+        }
 
-leftPos = Math.max(0, Math.min(leftPos, barWidth - labelWidth));
+        let isMonthly = nextMonthly.getTime() === currentDate.getTime();
+        let isBiWeekly = !isMonthly && nextBiWeekly.getTime() === currentDate.getTime();
 
-superscript.style.left = leftPos + 'px';
-superscript.style.top = '-25px'; 
+        let labels = [];
+        let paymentAmount = 0;
 
-  document.getElementById('summaryText').textContent =
-    `${moneyFormatter.format(paid)} of ${moneyFormatter.format(startingAmount)} (${pct.toFixed(1)}%) paid off!`;
-}
+        if (isMonthly) {
+            labels.push(currentDate <= today && !processCombinedCheckpoint ? "Past Monthly" : "Monthly");
+            paymentAmount = 690.00;
+            balance += accruedInterest;
+            accruedInterest = 0.0;
+            nextMonthly.setMonth(nextMonthly.getMonth() + 1);
+        } 
+        else if (isBiWeekly) {
+            labels.push(currentDate <= today && !processCombinedCheckpoint ? "Past Bi-Weekly" : "Bi-Weekly");
+            paymentAmount = 600.00;
+            nextBiWeekly.setDate(nextBiWeekly.getDate() + 14);
+        }
 
+        if (processCombinedCheckpoint) {
+            labels.push('Checkpoint');
+            balance = userInput; 
+            checkpointProcessed = true;
+        } else {
+            let actualPayment = Math.min(paymentAmount, balance);
+            balance -= actualPayment;
+        }
 
-
-function showPaymentFloat(amount) {
-  const container = document.querySelector('.container'); 
-  const progressContainer = document.querySelector('.progress-container'); 
-
-  const el = document.createElement('div');
-  el.className = 'payment-float';
-el.textContent = `–${moneyFormatter.format(amount)}`;
-  container.appendChild(el);
-
- 
-  const containerRect = container.getBoundingClientRect();
-  const progressRect = progressContainer.getBoundingClientRect();
-
-
-  const centerX = progressRect.left - containerRect.left + progressRect.width / 2;
-  const topY = progressRect.top - containerRect.top - 20; 
-
-  el.style.left = centerX + 'px';
-  el.style.top = topY + 'px';
-
-
-
- 
-  setTimeout(() => el.remove(), 1800);
-}
-
-startBtn.onclick = () => {
-  startingAmount = parseFloat(startingAmountInput.value);
-  currentAmount  = parseFloat(currentAmountInput.value);
-  interestRate   = parseFloat(interestRateInput.value);
-  targetPayoffDate = targetDateInput.value; 
-
-  if (
-    isNaN(startingAmount) || startingAmount <= 0 ||
-    isNaN(currentAmount)  || currentAmount < 0 ||
-    isNaN(interestRate)   || interestRate < 0 ||
-    !targetPayoffDate
-  ) {
-    alert("Please enter valid numeric values and select a target date.");
-    return;
-  }
-
-  const now = new Date();
-
-  setup.style.display = 'none';
-  tracker.style.display = 'block';
-  editSettingsBtn.style.display = 'block';
-  updateProgress();
-saveTracker();
-};
-
-
-toggleAddPayment.onclick = () => {
-  if (!wrapper.classList.contains('show')) {
-    // Open the add payment input
-    wrapper.classList.add('show');
-    toggleAddPayment.classList.add('active'); 
-    extraPaymentInput.focus();
-  } else {
-    const v = parseFloat(extraPaymentInput.value);
-    if (!isNaN(v) && v > 0) {
-      currentAmount -= v;
-      if (currentAmount < 0) currentAmount = 0;
-      updateProgress();
-      showPaymentFloat(v); 
-      saveTracker();
-    }
-    wrapper.classList.remove('show');
-    toggleAddPayment.classList.remove('active'); 
-    extraPaymentInput.value = '';
-  }
-};
-
-extraPaymentInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') toggleAddPayment.click();
-});
-
-cancelAddPayment.onclick = () => {
-  wrapper.classList.remove('show');
-  toggleAddPayment.classList.remove('active'); 
-  extraPaymentInput.value = '';
-};
-
-resetBtn.onclick=()=>{
-  if(confirm("Reset tracker?")){
-    localStorage.clear();
-    location.reload();
-  }
-};
-
-const exportBtn = document.getElementById('exportBtn');
-const importBtn = document.getElementById('importBtn');
-const fileInput = document.getElementById('fileInput');
-
-// EXPORT
-exportBtn.onclick = () => {
-  const targetPayoffDate = document.getElementById('targetPayoffDate').value;
-  
-  const data = {
-    startingAmount,
-    currentAmount,
-    interestRate,
-    targetPayoffDate
-  };
-
-  const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-
-  const now = new Date();
-  const monthNames = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
-  const month = monthNames[now.getMonth()];
-  const day = String(now.getDate()).padStart(2, '0');
-  const year = now.getFullYear();
-const filename = `debt_${year}${month}${day}.json`;
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-};
-// IMPORT
-fileInput.onchange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  try {
-    const text = await file.text();
-    const importedData = JSON.parse(text);
-
-    const { startingAmount: sa, currentAmount: ca, interestRate: ir, targetPayoffDate: tpd } = importedData;
-
-    // Validation
-if (
-  typeof sa !== 'number' || sa <= 0 ||
-  typeof ca !== 'number' || ca < 0 || ca > sa ||
-  typeof ir !== 'number' || ir < 0
-) {
-  alert("Imported data contains invalid numbers. Please check your file.");
-  return;
-}
-    // Apply to variables
-    startingAmount = sa;
-    currentAmount = ca;
-    interestRate = ir;
-
-    // Restore target date if present
-    if (tpd) {
-      targetDateInput.value = tpd;
-      targetPayoffDate = tpd; 
-      localStorage.setItem('targetPayoffDate', tpd);
+        outputHtml += renderCard(currentDate, labels, accruedInterest, paymentAmount, balance, balance + accruedInterest, cardCount++);
+        lastEventDate = currentDate;
     }
 
-    // Save everything to localStorage
-    localStorage.setItem('debtTracker', JSON.stringify({
-      startingAmount,
-      currentAmount,
-      interestRate,
-      targetPayoffDate: tpd
-    }));
+    outputHtml += renderCard(lastEventDate, ['Payoff Complete'], 0, 0, 0, 0, cardCount++);
 
-    // Show tracker
-    setup.style.display = 'none';
-    tracker.style.display = 'block';
-
-    applyMonthlyLogic();
-    updateProgress();
-    saveTracker();
-
-  } catch (err) {
-    alert("Failed to import data. Make sure it's a valid JSON file.");
-    console.error(err);
-  }
-
-  fileInput.value = "";
-};
-
-
-// Trigger file input when clicking import button
-importBtn.onclick = () => {
-  fileInput.click();
-};
-
-const targetDateInput = document.getElementById('targetPayoffDate');
-
-
-document.addEventListener('DOMContentLoaded', () => {
-  const saved = JSON.parse(localStorage.getItem('debtTracker'));
-  if (saved) {
-    ({ startingAmount, currentAmount, interestRate, targetPayoffDate } = saved);
-
-    setup.style.display = 'none';
-    tracker.style.display = 'block';
-
-  if (targetPayoffDate) {
-  targetDateInput.value = targetPayoffDate;
-    updateAdditionalPaymentText(targetPayoffDate); 
-
-  setTimeout(() => {
-    //console.log('Target date after setting value:', targetDateInput.value);
-    updateAdditionalPaymentText();
-  }, 0);
+    // --- TRIGGER STAGGERED REVEAL ---
+    setTimeout(() => {
+        resultsContainer.innerHTML = outputHtml;
+        // Small delay to ensure browser registers the DOM change before animating
+        requestAnimationFrame(() => {
+            resultsContainer.classList.add('visible');
+        });
+        calcButton.textContent = 'Recalculate';
+    }, 50);
 }
 
-    applyMonthlyLogic(); 
-	tracker.style.display = 'block';
-	editSettingsBtn.style.display = 'block';
-    updateProgress(); 
-	 //console.log('Target date value before computing additional payment:', targetDateInput.value);
-	 updateAdditionalPaymentText();
+// Add index parameter at the end
+function renderCard(dateObj, labels, interest, payment, runningBal, totalBal, index) {
+    const formattedDate = dateFormatter.format(dateObj);
+    // 0.05s (50ms) delay per card creates a smooth waterfall effect
+    const delay = index * 0.05; 
     
-  }
-});
-
-function updateAdditionalPaymentText() {
-  const additionalText = document.getElementById('additionalPaymentText');
-
-  if (currentAmount <= 0) {
-    additionalText.textContent = '';
-    return;
-  }
-
-  const dateValue = targetDateInput.value;
-  if (!dateValue) {
-    additionalText.textContent = '';
-    return;
-  }
-
-  const [year, month, day] = dateValue.split('-').map(Number);
-  const targetDate = new Date(year, month - 1, day);
-
-  if (isNaN(targetDate.getTime())) {
-    additionalText.textContent = '';
-    return;
-  }
-
-  const startDate = new Date();
-  if (targetDate <= startDate) {
-    additionalText.textContent = 'Target date must be in the future';
-    return;
-  }
-
-  const dailyRate = (interestRate / 100) / 365;
-
-  // Count full months
-  let months =
-    (targetDate.getFullYear() - startDate.getFullYear()) * 12 +
-    (targetDate.getMonth() - startDate.getMonth());
-
-  if (months <= 0) {
-    additionalText.textContent = '';
-    return;
-  }
-
-  // Simulate payoff for a given monthly payment
-  function simulate(payment) {
-    let balance = currentAmount;
-    let simDate = new Date(startDate);
-
-    for (let i = 0; i < months; i++) {
-      const daysInMonth = new Date(
-        simDate.getFullYear(),
-        simDate.getMonth() + 1,
-        0
-      ).getDate();
-
-      // Daily accrual, applied monthly
-      const interest = balance * dailyRate * daysInMonth;
-      balance += interest;
-      balance -= payment;
-
-      if (balance <= 0) return balance;
-
-      simDate.setMonth(simDate.getMonth() + 1);
+    if (labels.includes('Payoff Complete')) {
+        return `
+        <div class="card" style="border: 1px solid var(--payoff-color); transition-delay: ${delay}s">
+            <div class="card-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+                <span class="card-date">${formattedDate}</span>
+                <div class="badges"><span class="badge payoff">DEBT PAID OFF</span></div>
+            </div>
+        </div>`;
     }
 
-    return balance;
-  }
+    let badgesHtml = labels.map(label => {
+        let badgeClass = '';
+        if (label.includes('Monthly')) badgeClass = 'monthly';
+        else if (label.includes('Bi-Weekly')) badgeClass = 'bi-weekly';
+        else if (label.includes('Checkpoint')) badgeClass = 'checkpoint';
+        return `<span class="badge ${badgeClass}">${label.replace('Past ', '')}</span>`;
+    }).join('');
 
-  // Binary search for required payment
-  let low = 0;
-  let high = currentAmount * 2; // safe upper bound
-  let mid;
-
-  for (let i = 0; i < 40; i++) {
-    mid = (low + high) / 2;
-    const result = simulate(mid);
-
-    if (result > 0) {
-      low = mid;
-    } else {
-      high = mid;
-    }
-  }
-
-  const requiredPerMonth = Math.round(mid * 100) / 100;
-  const formattedDate = targetDate.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-  additionalText.textContent =
-    `You need to pay about ${moneyFormatter.format(requiredPerMonth)} per month to finish by ${formattedDate}.`;
+    return `
+    <div class="card" style="transition-delay: ${delay}s">
+        <div class="card-header">
+            <span class="card-date">${formattedDate}</span>
+            <div class="badges">${badgesHtml}</div>
+        </div>
+        <div>
+            ${payment > 0 ? `<div class="row"><span>Payment</span> <span>${moneyFormatter.format(payment)}</span></div>` : ''}
+            <div class="row"><span>Accrued Interest</span> <span>${moneyFormatter.format(interest)}</span></div>
+            <div class="row"><span>Running Balance</span> <span>${moneyFormatter.format(runningBal)}</span></div>
+            <div class="row total"><span>Total Balance</span> <span>${moneyFormatter.format(totalBal)}</span></div>
+        </div>
+    </div>`;
 }
-
-
-const ftr = document.getElementById('ftr');
-const currentYear = new Date().getFullYear();
-ftr.innerHTML = `ver 0.11 AP &copy; ${currentYear}`;
-// --- REFRESH ON RESUME LOGIC ---
-function refreshOnResume() {
-  applyMonthlyLogic();
-  updateAdditionalPaymentText();
-  updateProgress();
-}
-// When tab/app becomes visible again
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) {
-    refreshOnResume();
-  }
-});
-// iOS Safari / PWA restore from cache
-window.addEventListener("pageshow", (e) => {
-  if (e.persisted) {
-    refreshOnResume();
-  }
-});
 </script>
+
 </body>
 </html>
