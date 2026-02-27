@@ -218,13 +218,61 @@
             opacity: 1;
             transform: translateY(0);
         }
+
+    
+
+/* Temporary highlight animation */
+@keyframes highlightBorder {
+    0% { border-color: var(--checkpoint-color); }
+    100% { border-color: var(--divider-color); }
+}
+
+.card.highlight {
+    animation: highlightBorder 2s ease-out forwards;
+    border: 1px solid var(--checkpoint-color);
+}
+
+/* Back to Top Button */
+
+#backToTop {
+    position: fixed;
+    bottom: max(20px, env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background-color: var(--surface-color);
+    color: var(--accent-color);
+    border: 1px solid var(--divider-color);
+    border-radius: 5px; /* Fixed double semicolon here */
+    width: 20px;
+    height: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+    z-index: 1000;
+    
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    line-height: 1; 
+ 
+}
+
+#backToTop.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1>Paydown Progress v2</h1>
+        <h1>paydown progress v2</h1>
     </div>
 
     <div class="input-card">
@@ -235,11 +283,13 @@
             <span>$</span>
             <input type="number" id="balanceInput" step="0.01" inputmode="decimal" value="0">
         </div>
-      <button id="calcButton" onclick="calculateProjection()">Calculate Projection</button>
+      <button id="calcButton" onclick="calculateProjection()">calculate projection</button>
     </div>
 
-    <div id="results" class="results"></div>
+<div id="results" class="results"></div>
 </div>
+
+<button id="backToTop" onclick="scrollToTop()">top</button>
 
 <script>
     // Utility Formatter
@@ -261,11 +311,12 @@
 
     // Update the UI prompt with today's formatted date
     document.getElementById('prompt-label').textContent = 
-        `What is your current posted balance as of ${dateFormatter.format(today)}?`;
+        `what is your current posted balance as of ${dateFormatter.format(today)}?`;
 
     // 2. Local Storage Implementation
     const STORAGE_KEY = 'paydown_balance_input';
     const balanceInput = document.getElementById('balanceInput');
+    const backToTopBtn = document.getElementById('backToTop');
 
     // Load saved value on page load
     window.addEventListener('load', () => {
@@ -274,6 +325,19 @@
             balanceInput.value = savedBalance;
         }
     });
+
+    // Show/Hide Back to Top button on scroll
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+            backToTopBtn.classList.add('visible');
+        } else {
+            backToTopBtn.classList.remove('visible');
+        }
+    });
+
+    function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
     function calculateProjection() {
         const userInput = parseFloat(balanceInput.value);
@@ -309,6 +373,7 @@
 
         let outputHtml = '';
         let cardCount = 0;
+        let checkpointId = null;
 
         // Calculation Loop
         for (let i = 0; i < 2000; i++) {
@@ -334,7 +399,8 @@
 
             if (processStandaloneCheckpoint) {
                 balance = userInput; 
-                outputHtml += renderCard(currentDate, ['Checkpoint'], accruedInterest, 0, balance, balance + accruedInterest, cardCount++);
+                checkpointId = `card-${cardCount}`;
+                outputHtml += renderCard(currentDate, ['Checkpoint'], accruedInterest, 0, balance, balance + accruedInterest, cardCount++, checkpointId);
                 checkpointProcessed = true;
                 lastEventDate = currentDate;
                 continue; 
@@ -361,6 +427,7 @@
 
             if (processCombinedCheckpoint) {
                 labels.push('Checkpoint');
+                checkpointId = `card-${cardCount}`;
                 balance = userInput; 
                 checkpointProcessed = true;
             } else {
@@ -368,30 +435,43 @@
                 balance -= actualPayment;
             }
 
-            outputHtml += renderCard(currentDate, labels, accruedInterest, paymentAmount, balance, balance + accruedInterest, cardCount++);
+            outputHtml += renderCard(currentDate, labels, accruedInterest, paymentAmount, balance, balance + accruedInterest, cardCount++, checkpointId);
             lastEventDate = currentDate;
         }
 
         outputHtml += renderCard(lastEventDate, ['Payoff Complete'], 0, 0, 0, 0, cardCount++);
 
-        // --- TRIGGER STAGGERED REVEAL ---
+        // --- TRIGGER STAGGERED REVEAL AND SCROLL ---
         setTimeout(() => {
             resultsContainer.innerHTML = outputHtml;
             requestAnimationFrame(() => {
                 resultsContainer.classList.add('visible');
+                
+                // --- SCROLL TO CHECKPOINT AND HIGHLIGHT ---
+                if (checkpointId) {
+                    const checkpointCard = document.getElementById(checkpointId);
+                    if (checkpointCard) {
+                        checkpointCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // Add class to trigger animation, remove after 2s
+                        checkpointCard.classList.add('highlight');
+                        setTimeout(() => {
+                            checkpointCard.classList.remove('highlight');
+                        }, 2000);
+                    }
+                }
             });
-            calcButton.textContent = 'Recalculate';
+            calcButton.textContent = 'recalculate';
         }, 50);
     }
 
     // HTML Generator for UI Cards
-    function renderCard(dateObj, labels, interest, payment, runningBal, totalBal, index) {
+    function renderCard(dateObj, labels, interest, payment, runningBal, totalBal, index, id = '') {
         const formattedDate = dateFormatter.format(dateObj);
         const delay = index * 0.05; 
         
         if (labels.includes('Payoff Complete')) {
             return `
-            <div class="card" style="border: 1px solid var(--payoff-color); transition-delay: ${delay}s">
+            <div id="${id}" class="card" style="border: 1px solid var(--payoff-color); transition-delay: ${delay}s">
                 <div class="card-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
                     <span class="card-date">${formattedDate}</span>
                     <div class="badges"><span class="badge payoff">DEBT PAID OFF</span></div>
@@ -408,7 +488,7 @@
         }).join('');
 
         return `
-        <div class="card" style="transition-delay: ${delay}s">
+        <div id="${id}" class="card" style="transition-delay: ${delay}s">
             <div class="card-header">
                 <span class="card-date">${formattedDate}</span>
                 <div class="badges">${badgesHtml}</div>
@@ -425,4 +505,5 @@
 
 </body>
 </html>
+
 
