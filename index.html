@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Paydown Progress v2</title>
+    <title>Paydown Progress v3</title>
     <link rel="apple-touch-icon" href="icon_new.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -44,79 +44,19 @@
 
         .header {
             text-align: center;
-            margin-bottom: 24px;
+            margin-bottom: 28px;
         }
 
         .header h1 {
             font-size: 24px;
             font-weight: 700;
-            margin: 0 0 8px 0;
+            margin: 0 0 6px 0;
         }
 
         .header p {
             color: var(--text-secondary);
-            font-size: 15px;
+            font-size: 14px;
             margin: 0;
-        }
-
-        .input-card {
-            background-color: var(--surface-color);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 24px;
-        }
-
-        .input-label {
-            display: block;
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            line-height: 1.4;
-        }
-
-        .input-wrapper {
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .input-wrapper span {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        input[type="number"] {
-            width: 100%;
-            background-color: #2c2c2e;
-            border: none;
-            border-radius: 12px;
-            padding: 16px 16px 16px 36px;
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--text-primary);
-            outline: none;
-            appearance: none;
-        }
-
-        button {
-            width: 100%;
-            background-color: var(--accent-color);
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            padding: 16px;
-            font-size: 17px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        button:active {
-            opacity: 0.7;
         }
 
         .results {
@@ -125,20 +65,61 @@
             gap: 16px;
         }
 
-       /* Container stays static, cards animate */
-.card {
-    background-color: var(--surface-color);
-    border-radius: 16px;
-    padding: 16px;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.5s ease, transform 0.5s ease;
-}
+        /* ── Card Flip Shell ── */
+        .card-scene {
+            perspective: 900px;
+            /* height is set dynamically via JS after measuring */
+        }
 
+        .card-flipper {
+            position: relative;
+            width: 100%;
+            transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
 
-        #results.visible .card {
-        opacity: 1;
-        transform: translateY(0);
+        .card-scene.flipped .card-flipper {
+            transform: rotateY(180deg);
+        }
+
+        .card-front,
+        .card-back {
+            width: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 16px;
+            background-color: var(--surface-color);
+        }
+
+        .card-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 20px;
+            gap: 14px;
+        }
+
+        /* ── Front Card Styles ── */
+        .card-front {
+            padding: 16px;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease, border-color 2s ease;
+            border: 1px solid transparent;
+        }
+
+        #results.visible .card-front {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card-front:active {
+            opacity: 0.8;
         }
 
         .card-header {
@@ -155,7 +136,6 @@
             font-weight: 600;
         }
 
-        /* Container for multiple badges */
         .badges {
             display: flex;
             gap: 6px;
@@ -172,10 +152,11 @@
             letter-spacing: 0.5px;
         }
 
-        .badge.monthly { background-color: rgba(191, 90, 242, 0.2); color: var(--monthly-color); }
-        .badge.biweekly { background-color: rgba(50, 173, 230, 0.2); color: var(--biweekly-color); }
-        .badge.checkpoint { background-color: rgba(255, 159, 10, 0.2); color: var(--checkpoint-color); }
-        .badge.payoff { background-color: rgba(50, 215, 75, 0.2); color: var(--payoff-color); }
+        .badge.monthly   { background-color: rgba(191, 90, 242, 0.2); color: var(--monthly-color); }
+        .badge.biweekly  { background-color: rgba(50, 173, 230, 0.2); color: var(--biweekly-color); }
+        .badge.past      { opacity: 0.55; }
+        .badge.payoff    { background-color: rgba(50, 215, 75, 0.2); color: var(--payoff-color); }
+        .badge.custom    { background-color: rgba(255, 159, 10, 0.2); color: var(--checkpoint-color); }
 
         .row {
             display: flex;
@@ -184,17 +165,9 @@
             font-size: 15px;
         }
 
-        .row:last-child {
-            margin-bottom: 0;
-        }
-
-        .row span:first-child {
-            color: var(--text-secondary);
-        }
-
-        .row span:last-child {
-            font-weight: 500;
-        }
+        .row:last-child { margin-bottom: 0; }
+        .row span:first-child { color: var(--text-secondary); }
+        .row span:last-child  { font-weight: 500; }
 
         .row.total {
             margin-top: 12px;
@@ -202,311 +175,420 @@
             border-top: 1px dashed var(--divider-color);
             font-size: 16px;
         }
-        
+
         .row.total span:first-child { color: var(--text-primary); font-weight: 600; }
-        .row.total span:last-child { 
-    font-weight: 700; 
-    color: var(--payoff-red); /* Changed from --accent-color to red */
-}
+        .row.total span:last-child  { font-weight: 700; color: var(--payoff-red); }
+
+        .tap-hint {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 10px;
+            opacity: 0.6;
+        }
+
+        /* Payoff card — no cursor */
+        .card-front.payoff-card {
+            cursor: default;
+            border: 1px solid var(--payoff-color) !important;
+        }
+
+        /* ── Back (Edit) Panel ── */
+        .back-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .back-date {
+            font-size: 17px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .edit-row {
+            display: flex;
+            align-items: center;
+            background-color: #2c2c2e;
+            border-radius: 12px;
+            padding: 0 16px;
+            gap: 6px;
+        }
+
+        .edit-row span {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .edit-row input {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+            padding: 14px 0;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .back-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-save, .btn-cancel {
+            flex: 1;
+            border: none;
+            border-radius: 10px;
+            padding: 13px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-save   { background-color: var(--accent-color); color: #fff; }
+        .btn-cancel { background-color: #2c2c2e; color: var(--text-secondary); }
+
+        /* ── Highlight animation ── */
+        @keyframes highlightBorder {
+            0%   { border-color: var(--checkpoint-color); }
+            100% { border-color: transparent; }
+        }
+
+        .card-front.highlight {
+            animation: highlightBorder 2.5s ease-out forwards;
+            border: 1px solid var(--checkpoint-color);
+        }
+
+        /* ── Back to Top ── */
+        #backToTop {
+            position: fixed;
+            bottom: max(20px, env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background-color: var(--surface-color);
+            color: var(--accent-color);
+            border: 1px solid var(--divider-color);
+            border-radius: 5px;
+            width: 50px;
+            height: 50px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #backToTop.visible {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
 
         #results {
             opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.4s ease, transform 0.4s ease;
+            transition: opacity 0.4s ease;
         }
+
         #results.visible {
             opacity: 1;
-            transform: translateY(0);
         }
-
-    
-
-/* Temporary highlight animation */
-@keyframes highlightBorder {
-    0% { border-color: var(--checkpoint-color); }
-    100% { border-color: var(--divider-color); }
-}
-
-.card.highlight {
-    animation: highlightBorder 2s ease-out forwards;
-    border: 1px solid var(--checkpoint-color);
-}
-
-/* Back to Top Button */
-
-#backToTop {
-    position: fixed;
-    bottom: max(20px, env(safe-area-inset-bottom));
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background-color: var(--surface-color);
-    color: var(--accent-color);
-    border: 1px solid var(--divider-color);
-    border-radius: 5px; /* Fixed double semicolon here */
-    width: 50px;
-    height: 50px;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    transition: transform 0.3s ease, opacity 0.3s ease;
-    opacity: 0;
-    z-index: 1000;
-    
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    line-height: 1; 
- 
-}
-
-#backToTop.visible {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
-}
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1>paydown progress v2</h1>
+        <h1>paydown progress v3</h1>
     </div>
-
-    <div class="input-card">
-        <label class="input-label" id="prompt-label">
-            enter the current balance as of [DATE].
-        </label>
-        <div class="input-wrapper">
-            <span>$</span>
-            <input type="number" id="balanceInput" step="0.01" inputmode="decimal" value="0">
-        </div>
-      <button id="calcButton" onclick="calculateProjection()">calculate projection</button>
-    </div>
-
-<div id="results" class="results"></div>
+    <div id="results" class="results"></div>
 </div>
 
 <button id="backToTop" onclick="scrollToTop()">top</button>
 
 <script>
-    // Utility Formatter
-    const moneyFormatter = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2
-    });
+    // ── Formatters ──────────────────────────────────────────────────────────────
+    const moneyFmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 });
+    const dateFmt  = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-    const dateFormatter = new Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-    });
+    // ── Constants ───────────────────────────────────────────────────────────────
+    const START_BALANCE   = 21847.03;
+    const INTEREST_RATE   = 6.45;
+    const DAILY_RATE      = INTEREST_RATE / 100 / 365;
+    const DEFAULT_MONTHLY  = 690.00;
+    const DEFAULT_BIWEEKLY = 600.00;
 
-    // 1. Setup Today's Date
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // ── Overrides store: key = ISO date string, value = custom payment amount ──
+    let overrides = {};
 
-    // Update the UI prompt with today's formatted date
-    document.getElementById('prompt-label').textContent = 
-        `enter the current balance as of ${dateFormatter.format(today)}.`;
+    // ── Build the master schedule (dates + default amounts) ─────────────────────
+    // Payments already made in Feb: Feb 1 (monthly), Feb 13 (biweekly)
+    // Schedule starts Feb 1, 2026
+    function buildSchedule() {
+        const events = [];
+        let nextMonthly  = new Date(2026, 1, 1);   // Feb 1
+        let nextBiWeekly = new Date(2026, 1, 13);  // Feb 13
 
-    // 2. Local Storage Implementation
-    const STORAGE_KEY = 'paydown_balance_input';
-    const balanceInput = document.getElementById('balanceInput');
-    const backToTopBtn = document.getElementById('backToTop');
+        for (let i = 0; i < 2000; i++) {
+            const mTime = nextMonthly.getTime();
+            const bTime = nextBiWeekly.getTime();
 
-    // Load saved value on page load
-    window.addEventListener('load', () => {
-        const savedBalance = localStorage.getItem(STORAGE_KEY);
-        if (savedBalance) {
-            balanceInput.value = savedBalance;
+            let eventDate, type, defaultAmt;
+
+            if (mTime <= bTime) {
+                eventDate  = new Date(nextMonthly);
+                type       = 'monthly';
+                defaultAmt = DEFAULT_MONTHLY;
+                nextMonthly.setMonth(nextMonthly.getMonth() + 1);
+            } else {
+                eventDate  = new Date(nextBiWeekly);
+                type       = 'biweekly';
+                defaultAmt = DEFAULT_BIWEEKLY;
+                nextBiWeekly.setDate(nextBiWeekly.getDate() + 14);
+            }
+
+            events.push({ date: eventDate, type, defaultAmt });
+
+            // Stop generating far past payoff (safety)
+            if (events.length > 500) break;
         }
-    });
+        return events;
+    }
 
-    // Show/Hide Back to Top button on scroll
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 300) {
-            backToTopBtn.classList.add('visible');
+    // ── Run amortization with current overrides ──────────────────────────────────
+    function runAmortization(schedule) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const results = [];
+
+        let balance = START_BALANCE;
+        let accruedInterest = 0;
+        let lastDate = new Date(2026, 1, 1); // Feb 1 is our start anchor
+
+        // The Feb 1 monthly event IS the first entry in the schedule.
+        // We treat all events on or before today as "past".
+
+        for (let i = 0; i < schedule.length; i++) {
+            const ev = schedule[i];
+            const dateKey = toKey(ev.date);
+
+            // Accrue interest from last event to this event
+            const daysElapsed = Math.round((ev.date - lastDate) / 86400000);
+            accruedInterest += balance * DAILY_RATE * daysElapsed;
+
+            const isPast = ev.date <= today;
+            const isCustom = overrides.hasOwnProperty(dateKey);
+            const payment = isCustom ? overrides[dateKey] : ev.defaultAmt;
+
+            // For monthly: capitalize interest first
+            if (ev.type === 'monthly') {
+                balance += accruedInterest;
+                accruedInterest = 0;
+            }
+
+            const actualPayment = Math.min(payment, balance + (ev.type !== 'monthly' ? accruedInterest : 0));
+            balance -= actualPayment;
+            if (balance < 0) balance = 0;
+
+            results.push({
+                date:       ev.date,
+                dateKey,
+                type:       ev.type,
+                isPast,
+                isCustom,
+                payment:    actualPayment,
+                interest:   ev.type === 'monthly' ? 0 : accruedInterest, // for display
+                runningBal: balance,
+                totalBal:   balance + (ev.type === 'monthly' ? 0 : accruedInterest),
+                defaultAmt: ev.defaultAmt,
+            });
+
+            lastDate = ev.date;
+
+            if (balance <= 0) break;
+        }
+
+        return results;
+    }
+
+    function toKey(d) {
+        return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    }
+
+    // ── Render ──────────────────────────────────────────────────────────────────
+    const schedule = buildSchedule();
+
+    function render(highlightKey = null) {
+        const data = runAmortization(schedule);
+        const container = document.getElementById('results');
+        container.classList.remove('visible');
+        container.innerHTML = '';
+
+        let html = '';
+
+        data.forEach((row, i) => {
+            const delay = Math.min(i * 0.04, 1.2);
+            const isPaid = row.isPast;
+            const labelText = row.type === 'monthly' ? 'Monthly' : 'Bi-Weekly';
+            const badgeClass = row.type === 'monthly' ? 'monthly' : 'biweekly';
+            const pastClass  = isPaid ? ' past' : '';
+            const customBadge = row.isCustom ? `<span class="badge custom">edited</span>` : '';
+
+            html += `
+            <div class="card-scene" id="scene-${row.dateKey}" data-key="${row.dateKey}" data-index="${i}">
+              <div class="card-flipper">
+
+                <!-- FRONT -->
+                <div class="card-front${isPaid ? ' past-card' : ''}" 
+                     style="transition-delay: ${delay}s; ${isPaid ? 'opacity:0.55;' : ''}"
+                     onclick="flipCard('${row.dateKey}')">
+                  <div class="card-header">
+                    <span class="card-date">${dateFmt.format(row.date)}</span>
+                    <div class="badges">
+                      <span class="badge ${badgeClass}${pastClass}">${isPaid ? '✓ ' : ''}${labelText}</span>
+                      ${customBadge}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="row"><span>payment</span><span>${moneyFmt.format(row.payment)}</span></div>
+                    ${row.type !== 'monthly' ? `<div class="row"><span>accrued interest</span><span>${moneyFmt.format(row.interest)}</span></div>` : ''}
+                    <div class="row"><span>running balance</span><span>${moneyFmt.format(row.runningBal)}</span></div>
+                    <div class="row total"><span>total balance</span><span>${moneyFmt.format(row.totalBal)}</span></div>
+                  </div>
+                  <div class="tap-hint">tap to edit payment</div>
+                </div>
+
+                <!-- BACK -->
+                <div class="card-back">
+                  <div class="back-title">edit payment</div>
+                  <div class="back-date">${dateFmt.format(row.date)}</div>
+                  <div class="edit-row">
+                    <span>$</span>
+                    <input type="number" id="edit-${row.dateKey}" step="0.01" inputmode="decimal"
+                           value="${row.payment.toFixed(2)}"
+                           placeholder="${row.defaultAmt.toFixed(2)}">
+                  </div>
+                  <div class="back-actions">
+                    <button class="btn-cancel" onclick="cancelFlip('${row.dateKey}')">cancel</button>
+                    <button class="btn-save"   onclick="saveEdit('${row.dateKey}', ${row.defaultAmt})">save & recalculate</button>
+                  </div>
+                </div>
+
+              </div>
+            </div>`;
+        });
+
+        // Payoff card
+        if (data.length > 0 && data[data.length - 1].runningBal <= 0) {
+            const lastDate = data[data.length - 1].date;
+            html += `
+            <div class="card-scene">
+              <div class="card-flipper">
+                <div class="card-front payoff-card" style="transition-delay: ${Math.min(data.length * 0.04, 1.2)}s;">
+                  <div class="card-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+                    <span class="card-date">${dateFmt.format(lastDate)}</span>
+                    <div class="badges"><span class="badge payoff">🎉 debt paid off</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+        }
+
+        container.innerHTML = html;
+
+        requestAnimationFrame(() => {
+            container.classList.add('visible');
+
+            if (highlightKey) {
+                const scene = document.getElementById(`scene-${highlightKey}`);
+                if (scene) {
+                    const front = scene.querySelector('.card-front');
+                    scene.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    if (front) {
+                        front.classList.add('highlight');
+                        setTimeout(() => front.classList.remove('highlight'), 2500);
+                    }
+                }
+            }
+        });
+    }
+
+    // ── Flip logic ──────────────────────────────────────────────────────────────
+    let currentlyFlipped = null;
+
+    function flipCard(key) {
+        if (currentlyFlipped && currentlyFlipped !== key) {
+            const prev = document.getElementById(`scene-${currentlyFlipped}`);
+            if (prev) prev.classList.remove('flipped');
+        }
+
+        const scene = document.getElementById(`scene-${key}`);
+        if (!scene) return;
+
+        // Set back panel height to match front
+        const front = scene.querySelector('.card-front');
+        const back  = scene.querySelector('.card-back');
+        const flipper = scene.querySelector('.card-flipper');
+        if (front && back) {
+            back.style.height = front.offsetHeight + 'px';
+        }
+
+        scene.classList.toggle('flipped');
+        currentlyFlipped = scene.classList.contains('flipped') ? key : null;
+
+        if (currentlyFlipped) {
+            setTimeout(() => {
+                const input = document.getElementById(`edit-${key}`);
+                if (input) { input.focus(); input.select(); }
+            }, 300);
+        }
+    }
+
+    function cancelFlip(key) {
+        const scene = document.getElementById(`scene-${key}`);
+        if (scene) scene.classList.remove('flipped');
+        currentlyFlipped = null;
+    }
+
+    function saveEdit(key, defaultAmt) {
+        const input = document.getElementById(`edit-${key}`);
+        const val   = parseFloat(input.value);
+
+        if (isNaN(val) || val < 0) {
+            input.style.color = 'var(--payoff-red)';
+            setTimeout(() => input.style.color = '', 800);
+            return;
+        }
+
+        // If value matches default, remove override
+        if (Math.abs(val - defaultAmt) < 0.005) {
+            delete overrides[key];
         } else {
-            backToTopBtn.classList.remove('visible');
+            overrides[key] = val;
         }
+
+        currentlyFlipped = null;
+        render(key);
+    }
+
+    // ── Back to top ─────────────────────────────────────────────────────────────
+    window.addEventListener('scroll', () => {
+        document.getElementById('backToTop').classList.toggle('visible', window.scrollY > 300);
     });
 
     function scrollToTop() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function calculateProjection() {
-        const userInput = parseFloat(balanceInput.value);
-        const resultsContainer = document.getElementById('results');
-        const calcButton = document.getElementById('calcButton');
-
-        if (isNaN(userInput)) {
-            alert("Please enter a valid balance.");
-            return;
-        }
-
-        // --- SAVE TO LOCAL STORAGE ---
-        localStorage.setItem(STORAGE_KEY, balanceInput.value);
-
-        // --- RESET FOR RE-ANIMATION ---
-        resultsContainer.classList.remove('visible');
-        resultsContainer.innerHTML = '';
-
-        // =========================
-        // HARDCODED SETUP VARIABLES
-        // =========================
-        const START_BALANCE = 21847.03;
-        const INTEREST_RATE = 6.45;
-        const dailyRate = INTEREST_RATE / 100 / 365;
-
-        let nextMonthly = new Date(2026, 1, 1);
-        let nextBiWeekly = new Date(2026, 1, 13);
-        
-        let balance = START_BALANCE;
-        let accruedInterest = 0.0;
-        let lastEventDate = new Date(2026, 1, 1);
-        let checkpointProcessed = false;
-
-        let outputHtml = '';
-        let cardCount = 0;
-        let checkpointId = null;
-
-        // Calculation Loop
-        for (let i = 0; i < 2000; i++) {
-            if (balance <= 0 && checkpointProcessed) break;
-
-            let nextScheduledDate = new Date(Math.min(nextMonthly, nextBiWeekly));
-            let currentDate = nextScheduledDate;
-            let processStandaloneCheckpoint = false;
-            let processCombinedCheckpoint = false;
-
-            if (!checkpointProcessed) {
-                if (today < nextScheduledDate) {
-                    processStandaloneCheckpoint = true;
-                    currentDate = new Date(today);
-                } else if (today.getTime() === nextScheduledDate.getTime()) {
-                    processCombinedCheckpoint = true;
-                    currentDate = nextScheduledDate;
-                }
-            }
-
-            let daysElapsed = Math.round((currentDate - lastEventDate) / (1000 * 60 * 60 * 24));
-            accruedInterest += balance * dailyRate * daysElapsed;
-
-            if (processStandaloneCheckpoint) {
-                balance = userInput; 
-                checkpointId = `card-${cardCount}`;
-                outputHtml += renderCard(currentDate, ['Checkpoint'], accruedInterest, 0, balance, balance + accruedInterest, cardCount++, checkpointId);
-                checkpointProcessed = true;
-                lastEventDate = currentDate;
-                continue; 
-            }
-
-            let isMonthly = nextMonthly.getTime() === currentDate.getTime();
-            let isBiWeekly = !isMonthly && nextBiWeekly.getTime() === currentDate.getTime();
-
-            let labels = [];
-            let paymentAmount = 0;
-
-            if (isMonthly) {
-                labels.push(currentDate <= today && !processCombinedCheckpoint ? "Past Monthly" : "Monthly");
-                paymentAmount = 690.00;
-                balance += accruedInterest;
-                accruedInterest = 0.0;
-                nextMonthly.setMonth(nextMonthly.getMonth() + 1);
-            } 
-            else if (isBiWeekly) {
-                labels.push(currentDate <= today && !processCombinedCheckpoint ? "Past BiWeekly" : "BiWeekly");
-                paymentAmount = 600.00;
-                nextBiWeekly.setDate(nextBiWeekly.getDate() + 14);
-            }
-
-            if (processCombinedCheckpoint) {
-                labels.push('Checkpoint');
-                checkpointId = `card-${cardCount}`;
-                balance = userInput; 
-                checkpointProcessed = true;
-            } else {
-                let actualPayment = Math.min(paymentAmount, balance);
-                balance -= actualPayment;
-            }
-
-            outputHtml += renderCard(currentDate, labels, accruedInterest, paymentAmount, balance, balance + accruedInterest, cardCount++, checkpointId);
-            lastEventDate = currentDate;
-        }
-
-        outputHtml += renderCard(lastEventDate, ['Payoff Complete'], 0, 0, 0, 0, cardCount++);
-
-        // --- TRIGGER STAGGERED REVEAL AND SCROLL ---
-        setTimeout(() => {
-            resultsContainer.innerHTML = outputHtml;
-            requestAnimationFrame(() => {
-                resultsContainer.classList.add('visible');
-                
-                // --- SCROLL TO CHECKPOINT AND HIGHLIGHT ---
-                if (checkpointId) {
-                    const checkpointCard = document.getElementById(checkpointId);
-                    if (checkpointCard) {
-                        checkpointCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        // Add class to trigger animation, remove after 2s
-                        checkpointCard.classList.add('highlight');
-                        setTimeout(() => {
-                            checkpointCard.classList.remove('highlight');
-                        }, 2000);
-                    }
-                }
-            });
-            calcButton.textContent = 'recalculate';
-        }, 50);
-    }
-
-    // HTML Generator for UI Cards
-    function renderCard(dateObj, labels, interest, payment, runningBal, totalBal, index, id = '') {
-        const formattedDate = dateFormatter.format(dateObj);
-        const delay = index * 0.05; 
-        
-        if (labels.includes('Payoff Complete')) {
-            return `
-            <div id="${id}" class="card" style="border: 1px solid var(--payoff-color); transition-delay: ${delay}s">
-                <div class="card-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
-                    <span class="card-date">${formattedDate}</span>
-                    <div class="badges"><span class="badge payoff">DEBT PAID OFF</span></div>
-                </div>
-            </div>`;
-        }
-
-        let badgesHtml = labels.map(label => {
-            let badgeClass = '';
-            if (label.includes('Monthly')) badgeClass = 'monthly';
-            else if (label.includes('BiWeekly')) badgeClass = 'biweekly';
-            else if (label.includes('Checkpoint')) badgeClass = 'checkpoint';
-            return `<span class="badge ${badgeClass}">${label.replace('Past ', '')}</span>`;
-        }).join('');
-
-        return `
-        <div id="${id}" class="card" style="transition-delay: ${delay}s">
-            <div class="card-header">
-                <span class="card-date">${formattedDate}</span>
-                <div class="badges">${badgesHtml}</div>
-            </div>
-            <div>
-                ${payment > 0 ? `<div class="row"><span>payment</span> <span>${moneyFormatter.format(payment)}</span></div>` : ''}
-                <div class="row"><span>accrued interest</span> <span>${moneyFormatter.format(interest)}</span></div>
-                <div class="row"><span>running balance</span> <span>${moneyFormatter.format(runningBal)}</span></div>
-                <div class="row total"><span>total balance</span> <span>${moneyFormatter.format(totalBal)}</span></div>
-            </div>
-        </div>`;
-    }
+    // ── Init ────────────────────────────────────────────────────────────────────
+    render();
 </script>
-
 </body>
 </html>
-
-
-
-
-
