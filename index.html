@@ -590,14 +590,13 @@
     // ── Init ────────────────────────────────────────────────────────────────────
     render();
     
-    setTimeout(() => {
-    const today = new Date(); today.setHours(0,0,0,0);
+setTimeout(() => {
     const scenes = document.querySelectorAll('.card-scene[data-key]');
     for (const scene of scenes) {
-        const idx = parseInt(scene.dataset.index);
         const front = scene.querySelector('.card-front');
         if (front && !front.classList.contains('past-card')) {
-            scene.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const top = scene.getBoundingClientRect().top + window.pageYOffset - (window.innerHeight / 2 - scene.offsetHeight / 2);
+            window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
             break;
         }
     }
@@ -605,4 +604,5 @@
 </script>
 </body>
 </html>
+
 
