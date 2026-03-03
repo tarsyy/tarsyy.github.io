@@ -328,6 +328,14 @@
 
     // ── Overrides store: key = ISO date string, value = custom payment amount ──
     let overrides = {};
+try {
+    const saved = localStorage.getItem('paydown_overrides');
+    if (saved) overrides = JSON.parse(saved);
+} catch(e) {}
+
+    function persistOverrides() {
+    try { localStorage.setItem('paydown_overrides', JSON.stringify(overrides)); } catch(e) {}
+}
 
     // ── Build the master schedule (dates + default amounts) ─────────────────────
     // Payments already made in Feb: Feb 1 (monthly), Feb 13 (biweekly)
@@ -573,7 +581,7 @@
         } else {
             overrides[key] = val;
         }
-
+        persistOverrides();
         currentlyFlipped = null;
         render(key);
     }
@@ -604,5 +612,6 @@ setTimeout(() => {
 </script>
 </body>
 </html>
+
 
 
