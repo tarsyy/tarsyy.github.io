@@ -479,9 +479,10 @@ try {
                   <div class="back-date">${dateFmt.format(row.date)}</div>
                   <div class="edit-row">
                     <span>$</span>
-                    <input type="number" id="edit-${row.dateKey}" step="0.01" inputmode="decimal"
-                           value="${row.payment.toFixed(2)}"
-                           placeholder="${row.defaultAmt.toFixed(2)}">
+               <input type="number" id="edit-${row.dateKey}" step="0.01" inputmode="decimal"
+       value="${row.payment.toFixed(2)}"
+       placeholder="${row.defaultAmt.toFixed(2)}"
+       onfocus="this.value=''">
                   </div>
                   <div class="back-actions">
                     <button class="btn-cancel" onclick="cancelFlip('${row.dateKey}')">cancel</button>
@@ -550,13 +551,6 @@ try {
 
         scene.classList.toggle('flipped');
         currentlyFlipped = scene.classList.contains('flipped') ? key : null;
-
-        if (currentlyFlipped) {
-            setTimeout(() => {
-                const input = document.getElementById(`edit-${key}`);
-                if (input) { input.focus(); input.select(); }
-            }, 300);
-        }
     }
 
     function cancelFlip(key) {
@@ -612,6 +606,3 @@ setTimeout(() => {
 </script>
 </body>
 </html>
-
-
-
