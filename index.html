@@ -553,10 +553,18 @@ try {
     }
 
     function cancelFlip(key) {
-        const scene = document.getElementById(`scene-${key}`);
-        if (scene) scene.classList.remove('flipped');
-        currentlyFlipped = null;
+    const scene = document.getElementById(`scene-${key}`);
+    if (scene) scene.classList.remove('flipped');
+    currentlyFlipped = null;
+
+    // Reset input back to current calculated value
+    const input = document.getElementById(`edit-${key}`);
+    if (input) {
+        const data = runAmortization(schedule);
+        const row = data.find(r => r.dateKey === key);
+        if (row) input.value = row.payment.toFixed(2);
     }
+}
 
     function saveEdit(key, defaultAmt) {
         const input = document.getElementById(`edit-${key}`);
@@ -605,4 +613,5 @@ setTimeout(() => {
 </script>
 </body>
 </html>
+
 
