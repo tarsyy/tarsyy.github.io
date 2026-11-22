@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Core Stability Timer</title>
+<style>
+:root {
+  --bg:#111827; --panel:#1f2937; --text:#f9fafb;
+  --muted:#9ca3af; --accent:#2563eb; --border:#374151;
+}
+* {box-sizing:border-box}
+body {
+  margin:0; min-height:100vh; padding:24px 16px;
+  display:grid; place-items:center;
+  background:var(--bg); color:var(--text);
+  font:16px/1.45 system-ui,sans-serif;
+}
+main {width:min(100%,480px);display:flex;flex-direction:column;gap:16px}
+h1 {font-size:1.45rem;text-align:center}
+.panel {background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px}
+.settings {display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label {display:block;color:var(--muted);font-size:.88rem;margin-bottom:8px}
+input[type=number] {
+  width:100%;padding:12px;border:1px solid var(--border);
+  border-radius:10px;background:var(--bg);color:var(--text);
+  font-size:18px;font-weight:650;
+}
+.display {text-align:center;padding:28px 18px}
+#phase {font-size:.82rem;letter-spacing:2px;font-weight:750;color:var(--muted)}
+#timer {font-size:clamp(76px,19vw,112px);line-height:1.1;letter-spacing:-4px;font-weight:750;font-variant-numeric:tabular-nums;margin:12px 0}
+#instruction {font-size:1.1rem;font-weight:650}
+.track {height:7px;background:var(--border);border-radius:20px;overflow:hidden;margin-top:24px}
+#progress {height:100%;width:0%;background:var(--accent);transition:width .1s linear}
+#status {color:var(--muted);font-size:.9rem;margin-top:12px}
+.controls {display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+button {border:1px solid var(--border);border-radius:12px;padding:14px 10px;font-size:1rem;font-weight:700;cursor:pointer;background:var(--panel);color:var(--text)}
+button.primary {background:var(--accent);border-color:var(--accent);color:white}
+button:disabled {opacity:.45;cursor:not-allowed}
+.sound {display:flex;align-items:center;justify-content:space-between}
+.sound label {margin:0;color:var(--text)}
+.sound input {width:18px;height:18px;vertical-align:middle;accent-color:var(--accent)}
+.hint {color:var(--muted);text-align:center;font-size:.85rem}
+</style>
+</head>
+<body>
+<main>
+<h1>Core Stability Timer</h1>
+
+<section class="settings">
+  <div class="panel">
+    <label for="hold">Movement / hold (seconds)</label>
+    <input id="hold" type="number" min="1" max="600" value="10">
+  </div>
+  <div class="panel">
+    <label for="rest">Transition / rest (seconds)</label>
+    <input id="rest" type="number" min="1" max="120" value="2">
+  </div>
+</section>
+
+<section class="panel display">
+  <div id="phase">READY</div>
+  <div id="timer">10</div>
+  <div id="instruction">Get into position</div>
+  <div class="track"><div id="progress"></div></div>
+  <div id="status">Ready when you are</div>
+</section>
+
+<section class="controls">
+  <button id="start" class="primary">Start</button>
+  <button id="pause" disabled>Pause</button>
+  <button id="reset">Reset</button>
+</section>
+
+<section class="panel sound">
+  <div>
+    <strong>Sound cues</strong>
+    <div class="hint">Beep when switching phases</div>
+  </div>
+  <label><input id="sound" type="checkbox" checked> Enabled</label>
+</section>
+
+<p class="hint">Hold → transition → hold → transition. Repeats until stopped.</p>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+
+  let phase = 'hold';
+  let remaining = 10;
+  let duration = 10;
+  let running = false;
+  let paused = false;
+  let interval = null;
+  let endAt = 0;
+  let audio = null;
+
+  function settings() {
+    return {
+      h: Math.max(1, Math.min(600, Number($('hold').value) || 10)),
+      r: Math.max(1, Math.min(120, Number($('rest').value) || 2))
+    };
+  }
+
+  function beep() {
+    if (!$('sound').checked) return;
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === 'suspended') audio.resume();
+
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+
+      oscillator.connect(gain);
+      gain.connect(audio.destination);
+
+      oscillator.frequency.value = phase === 'hold' ? 880 : 550;
+      gain.gain.setValueAtTime(.12, audio.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.001, audio.currentTime + .16);
+
+      oscillator.start();
+      oscillator.stop(audio.currentTime + .17);
+    } catch(e) {}
+  }
+
+  function render() {
+    $('timer').textContent = Math.max(0, Math.ceil(remaining));
+    $('phase').textContent = phase === 'hold' ? 'HOLD POSITION' : 'TRANSITION';
+    $('instruction').textContent = phase === 'hold'
+      ? 'Stay strong. Keep breathing.'
+      : 'Move to the next position';
+
+    $('progress').style.width = (100 * (1 - remaining / duration)) + '%';
+    $('status').textContent = running ? 'Exercise in progress' : paused ? 'Paused' : 'Ready when you are';
+
+    $('start').textContent = paused ? 'Resume' : 'Start';
+    $('start').disabled = running;
+    $('pause').disabled = !running;
+    $('hold').disabled = running || paused;
+    $('rest').disabled = running || paused;
+  }
+
+  function switchPhase() {
+    phase = phase === 'hold' ? 'rest' : 'hold';
+    const s = settings();
+    duration = phase === 'hold' ? s.h : s.r;
+    remaining = duration;
+    beep();
+  }
+
+  function tick() {
+    remaining = Math.max(0, (endAt - performance.now()) / 1000);
+
+    if (remaining <= 0) {
+      switchPhase();
+      endAt = performance.now() + duration * 1000;
+    }
+
+    render();
+  }
+
+  function start() {
+    if (running) return;
+
+    if (!paused) {
+      phase = 'hold';
+      duration = settings().h;
+      remaining = duration;
+      beep();
+    }
+
+    paused = false;
+    running = true;
+    endAt = performance.now() + remaining * 1000;
+    interval = setInterval(tick, 50);
+    render();
+  }
+
+  function pause() {
+    if (!running) return;
+
+    remaining = Math.max(0, (endAt - performance.now()) / 1000);
+    clearInterval(interval);
+    interval = null;
+    running = false;
+    paused = true;
+    render();
+  }
+
+  function reset() {
+    clearInterval(interval);
+    interval = null;
+    running = false;
+    paused = false;
+    phase = 'hold';
+    duration = settings().h;
+    remaining = duration;
+    render();
+  }
+
+  $('start').addEventListener('click', start);
+  $('pause').addEventListener('click', pause);
+  $('reset').addEventListener('click', reset);
+
+  $('hold').addEventListener('change', () => {
+    if (!running && !paused) reset();
+  });
+
+  $('rest').addEventListener('change', () => {
+    if (!running && !paused) reset();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
