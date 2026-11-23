@@ -1,5 +1,5 @@
-
 <!DOCTYPE html>
+<!-- Exercise Timer v1.2 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -19,6 +19,7 @@
   --green: #50fa7b;
   --orange: #ffb86c;
   --border: #44475a;
+  --red: #ff5555;
 }
 
 * {
@@ -101,6 +102,22 @@ input[type=number] {
 input[type=number]:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+input.invalid {
+  border: 1px solid var(--red) !important;
+  box-shadow: 0 0 0 1px var(--red);
+}
+
+.input-error {
+  color: var(--red);
+  font-size: 12px;
+  margin-top: 5px;
+  display: none;
+}
+
+.input-error.show {
+  display: block;
 }
 
 .display {
@@ -229,7 +246,7 @@ button:disabled {
   <section class="settings">
 
     <div class="panel">
-      <label for="hold">Hold position (seconds)</label>
+      <label for="hold">Time (seconds)</label>
       <input
         id="hold"
         type="number"
@@ -238,10 +255,11 @@ button:disabled {
         step="0.5"
         value="10"
       >
+      <div id="hold-error" class="input-error">Enter desired time</div>
     </div>
 
     <div class="panel">
-      <label for="rest">Transition (seconds)</label>
+      <label for="rest">Rest (seconds)</label>
       <input
         id="rest"
         type="number"
@@ -250,6 +268,7 @@ button:disabled {
         step="0.5"
         value="2"
       >
+      <div id="rest-error" class="input-error">Enter desired time</div>
     </div>
 
   </section>
@@ -299,9 +318,7 @@ button:disabled {
     <button id="reset">
       Reset
     </button>
-
   </section>
-
 </main>
 
 <script>
@@ -334,7 +351,7 @@ button:disabled {
 
       rest: Math.max(
         0.5,
-        Math.min(120, Number($('rest').value) || 2)
+        Math.min(600, Number($('rest').value) || 2)
       ),
 
       reps: Math.max(
@@ -346,46 +363,80 @@ button:disabled {
   }
 
 
-  // Update display
-  function render() {
+  // Validate hold and rest inputs
+  
+function validateTimes() {
+  const holdValue = $('hold').value.trim();
+  const restValue = $('rest').value.trim();
 
-    $('timer').textContent =
-      remaining.toFixed(1).replace(/\.0$/, '');
+  const holdValid =
+    holdValue !== '' &&
+    Number.isFinite(Number(holdValue)) &&
+    Number(holdValue) >= 0.5 &&
+    Number(holdValue) <= 600;
 
-    const phaseEl = $('phase');
-    phaseEl.className = '';
+  const restValid =
+    restValue !== '' &&
+    Number.isFinite(Number(restValue)) &&
+    Number(restValue) >= 0.5 &&
+    Number(restValue) <= 600;
 
-    if (completed) {
-      phaseEl.textContent = 'COMPLETE';
-      phaseEl.classList.add('complete');
-    } else if (!running && !paused && currentRep === 0) {
-      phaseEl.textContent = 'READY';
-    } else if (phase === 'hold') {
-      phaseEl.textContent = 'HOLD POSITION';
-      phaseEl.classList.add('hold');
-    } else {
-      phaseEl.textContent = 'TRANSITION';
-      phaseEl.classList.add('rest');
-    }
+  $('hold').classList.toggle('invalid', !holdValid);
+  $('rest').classList.toggle('invalid', !restValid);
 
-    $('rep-count').textContent =
-      currentRep + ' / ' + settings().reps;
+  $('hold-error').textContent = holdValue === ''
+    ? 'Enter desired time'
+    : 'Enter a value from 0.5–600 seconds';
 
-    $('progress').style.width =
-      (100 * (1 - remaining / duration)) + '%';
+  $('rest-error').textContent = restValue === ''
+    ? 'Enter desired time'
+    : 'Enter a value from 0.5–600 seconds';
 
-    $('start').textContent =
-      paused ? 'Resume' : 'Start';
+  $('hold-error').classList.toggle('show', !holdValid);
+  $('rest-error').classList.toggle('show', !restValid);
 
-    $('start').disabled = running || completed;
-    $('pause').disabled = !running;
+  return holdValid && restValid;
+}
 
-    $('hold').disabled = running || paused || completed;
-    $('rest').disabled = running || paused || completed;
-    $('reps').disabled = running || paused || completed;
+// Update display
+function render() {
+  const timesValid = validateTimes();
 
+  $('timer').textContent = timesValid
+    ? remaining.toFixed(1).replace(/\.0$/, '')
+    : '-';
+
+  const phaseEl = $('phase');
+  phaseEl.className = '';
+
+  if (completed) {
+    phaseEl.textContent = 'COMPLETE';
+    phaseEl.classList.add('complete');
+  } else if (!running && !paused && currentRep === 0) {
+    phaseEl.textContent = 'READY';
+  } else if (phase === 'hold') {
+    phaseEl.textContent = 'HOLD POSITION';
+    phaseEl.classList.add('hold');
+  } else {
+    phaseEl.textContent = 'REST';
+    phaseEl.classList.add('rest');
   }
 
+  $('rep-count').textContent =
+    currentRep + ' / ' + settings().reps;
+
+  $('progress').style.width =
+    (100 * (1 - remaining / duration)) + '%';
+
+  $('start').textContent = paused ? 'Resume' : 'Start';
+  $('start').disabled = running || completed || !timesValid;
+
+  $('pause').disabled = !running;
+
+  $('hold').disabled = running || paused || completed;
+  $('rest').disabled = running || paused || completed;
+  $('reps').disabled = running || paused || completed;
+}
 
   // Switch phases
   function switchPhase() {
@@ -462,6 +513,8 @@ button:disabled {
   function start() {
 
     if (running || completed) return;
+
+    if (!validateTimes()) return;
 
     if (!paused) {
 
@@ -545,6 +598,19 @@ button:disabled {
 
     $(id).addEventListener('input', () => {
 
+      // Enforce maximum of 600 seconds
+      if (id === 'hold' || id === 'rest') {
+
+        const input = $(id);
+
+        if (Number(input.value) > 600) {
+          input.value = 600;
+        }
+
+        validateTimes();
+
+      }
+
       if (!running && !paused) {
         reset();
       }
@@ -560,6 +626,5 @@ button:disabled {
 })();
 
 </script>
-
 </body>
 </html>
