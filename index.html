@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Exercise Timer v1.2 -->
+<!-- Exercise Timer v1.3 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -275,7 +275,7 @@ button:disabled {
   </section>
 
   <section class="panel">
-    <label for="reps">Desired Reps</label>
+    <label for="reps">Reps</label>
     <input
       id="reps"
       type="number"
@@ -284,6 +284,7 @@ button:disabled {
       step="1"
       value="10"
     >
+        <div id="reps-error" class="input-error">Enter desired reps</div>
   </section>
 
   <section class="panel display">
@@ -369,6 +370,7 @@ button:disabled {
 function validateTimes() {
   const holdValue = $('hold').value.trim();
   const restValue = $('rest').value.trim();
+  const repsValue = $('reps').value.trim();
 
   const holdValid =
     holdValue !== '' &&
@@ -382,8 +384,17 @@ function validateTimes() {
     Number(restValue) >= 0.5 &&
     Number(restValue) <= 600;
 
+  const repsValid =
+  repsValue !=='' &&
+  Number.isFinite(Number(repsValue))&&
+  Number(repsValue) >=0 &&
+  Number(repsValue) <=999;
+
+
   $('hold').classList.toggle('invalid', !holdValid);
   $('rest').classList.toggle('invalid', !restValid);
+  $('reps').classList.toggle('invalid',!repsValid);
+
 
   $('hold-error').textContent = holdValue === ''
     ? 'Enter desired time'
@@ -392,16 +403,42 @@ function validateTimes() {
   $('rest-error').textContent = restValue === ''
     ? 'Enter desired time'
     : 'Enter a value from 0.5–600 seconds';
+   
+  $('reps-error').textContent = repsValue === ''
+    ? 'Enter desired reps'
+    : 'Enter a value from 1–999'; 
 
   $('hold-error').classList.toggle('show', !holdValid);
   $('rest-error').classList.toggle('show', !restValid);
+  $('reps-error').classList.toggle('show', !repsValid);
 
-  return holdValid && restValid;
+return holdValid && restValid;
+}
+
+function validateReps() {
+  const repsValue = $('reps').value.trim();
+
+  const repsValid =
+    repsValue !== '' &&
+    Number.isFinite(Number(repsValue)) &&
+    Number(repsValue) >= 1 &&
+    Number(repsValue) <= 999;
+
+  $('reps').classList.toggle('invalid', !repsValid);
+
+  $('reps-error').textContent = repsValue === ''
+    ? 'Enter desired reps'
+    : 'Enter a value from 1–999';
+
+  $('reps-error').classList.toggle('show', !repsValid);
+
+  return repsValid;
 }
 
 // Update display
 function render() {
   const timesValid = validateTimes();
+  const repsValid = validateReps();
 
   $('timer').textContent = timesValid
     ? remaining.toFixed(1).replace(/\.0$/, '')
@@ -423,14 +460,15 @@ function render() {
     phaseEl.classList.add('rest');
   }
 
-  $('rep-count').textContent =
-    currentRep + ' / ' + settings().reps;
+$('rep-count').textContent = repsValid
+  ? currentRep + ' / ' + settings().reps
+  : '-';
 
   $('progress').style.width =
     (100 * (1 - remaining / duration)) + '%';
 
   $('start').textContent = paused ? 'Resume' : 'Start';
-  $('start').disabled = running || completed || !timesValid;
+$('start').disabled = running || completed || !timesValid || !repsValid;
 
   $('pause').disabled = !running;
 
@@ -515,7 +553,7 @@ function render() {
 
     if (running || completed) return;
 
-    if (!validateTimes()) return;
+if (!validateTimes() || !validateReps()) return;
 
     if (!paused) {
 
@@ -629,4 +667,3 @@ function render() {
 </script>
 </body>
 </html>
-
